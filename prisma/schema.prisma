@@ -1,0 +1,168 @@
+
+// generator client {
+//   provider = "prisma-client"
+//   output   = "../src/generated/prisma"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+// }
+
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  
+}
+
+enum Role {
+  ADMIN
+  HOST
+  HOD
+  PRINCIPAL
+  STUDENT
+}
+
+enum EventStatus {
+  DRAFT
+  PENDING_HOD_REVIEW
+  PENDING_PRINCIPAL_APPROVAL
+  PENDING_HOD_SIGNATURE
+  FULLY_APPROVED
+  GUEST_INVITED
+  ONGOING
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum ApprovalAction {
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  password        String
+  role            Role
+  isFirstLogin    Boolean   @default(true)
+  department      String?
+  designation     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  hostedEvents    Event[]   @relation("HostedEvents")
+  attendance      Attendance[]
+  feedback        Feedback[]
+  notifications   Notification[]
+}
+
+model Event {
+  id                    String       @id @default(cuid())
+  title                 String
+  description           String
+  date                  DateTime
+  time                  String
+  venue                 String
+  department            String
+
+  // Guest info
+  guestName             String
+  guestEmail            String
+  guestStatus           String       @default("PENDING")  // PENDING, ACCEPTED, REJECTED
+
+  // Host
+  hostId                String
+  host                  User         @relation("HostedEvents", fields: [hostId], references: [id])
+
+  // Status
+  status                EventStatus  @default(DRAFT)
+
+  // HOD Review (first)
+  hodReviewAction       ApprovalAction?
+  hodReviewReason       String?
+  hodReviewedAt         DateTime?
+  hodReviewedById       String?
+
+  // Principal Approval
+  principalAction       ApprovalAction?
+  principalReason       String?
+  principalApprovedAt   DateTime?
+  principalApprovedById String?
+
+  // HOD Final Signature
+  hodSignatureAction    ApprovalAction?
+  hodSignedAt           DateTime?
+  hodSignedById         String?
+
+  // Guest invitation
+  guestInvitedAt        DateTime?
+
+  // Report
+  reportGeneratedAt     DateTime?
+  reportEmailedAt       DateTime?
+
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  attendance            Attendance[]
+  feedback              Feedback[]
+  notifications         Notification[]
+}
+
+model Attendance {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id])
+  attended    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@unique([eventId, studentId])
+}
+
+model Feedback {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id])
+  rating      Int      // 1-5
+  comment     String
+  sentiment   String?  // POSITIVE, NEUTRAL, NEGATIVE (filled by NLP)
+  createdAt   DateTime @default(now())
+
+  @@unique([eventId, studentId])
+}
+
+model NLPResult {
+  id                String   @id @default(cuid())
+  eventId           String   @unique
+  positiveCount     Int      @default(0)
+  neutralCount      Int      @default(0)
+  negativeCount     Int      @default(0)
+  positivePercent   Float    @default(0)
+  neutralPercent    Float    @default(0)
+  negativePercent   Float    @default(0)
+  keywords          String[] 
+  summary           String
+  analyzedAt        DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id])
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
