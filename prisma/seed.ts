@@ -22,6 +22,21 @@ async function main() {
     },
   });
   console.log('✅ Admin seeded: admin@met.edu / Admin@123');
+
+  const hostPassword = await bcrypt.hash('Host@123', 12);
+  await prisma.user.upsert({
+    where: { email: 'host@met.edu' },
+    update: {},
+    create: {
+      name: 'Event Host',
+      email: 'host@met.edu',
+      password: hostPassword,
+      role: 'HOST',
+      department: 'Computer Engineering',
+      isFirstLogin: false,
+    },
+  });
+  console.log('✅ Host seeded: host@met.edu / Host@123');
 }
 
 main()

@@ -114,6 +114,7 @@ model Event {
   attendance            Attendance[]
   feedback              Feedback[]
   notifications         Notification[]
+  report                Report?
 }
 
 model Attendance {
@@ -154,6 +155,18 @@ model NLPResult {
   keywords          String[] 
   summary           String
   analyzedAt        DateTime @default(now())
+}
+
+model Report {
+  id              String   @id @default(cuid())
+  eventId         String   @unique
+  event           Event    @relation(fields: [eventId], references: [id])
+  summary         String
+  financials      String?
+  attendanceCount Int      @default(0)
+  averageRating   Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Notification {
