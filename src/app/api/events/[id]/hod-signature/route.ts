@@ -25,8 +25,8 @@ export async function POST(req: Request, { params }: RouteParams) {
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
 
     const hodUser = await prisma.user.findUnique({ where: { id: session.user.id } });
-    if (hodUser?.department !== event.department) {
-      return NextResponse.json({ error: 'Forbidden. Event is in a different department.' }, { status: 403 });
+    if (!hodUser?.department || hodUser.department.toLowerCase().trim() !== event.department.toLowerCase().trim()) {
+      return NextResponse.json({ error: `Forbidden. Event is in '${event.department}', but you are HOD of '${hodUser?.department}'.` }, { status: 403 });
     }
 
     if (event.status !== EventStatus.PENDING_HOD_SIGNATURE) {
