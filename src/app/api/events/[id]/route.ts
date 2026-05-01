@@ -95,7 +95,18 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     if (event.hostId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    await prisma.event.delete({ where: { id } });
+    if (event.status === 'COMPLETED' || event.status === 'ONGOING') {
+      return NextResponse.json({ error: 'Cannot delete ongoing or completed events' }, { status: 400 });
+    }
+
+    // Cascade delete related records
+    await prisma.$transaction([
+      prisma.attendance.deleteMany({ where: { eventId: id } }),
+      prisma.feedback.deleteMany({ where: { eventId: id } }),
+      prisma.notification.deleteMany({ where: { eventId: id } }),
+      prisma.report.deleteMany({ where: { eventId: id } }),
+      prisma.event.delete({ where: { id } })
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

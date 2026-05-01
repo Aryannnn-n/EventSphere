@@ -66,6 +66,10 @@ export async function POST(req: Request, { params }: RouteParams) {
     const event = await prisma.event.findUnique({ where: { id } });
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
 
+    if (event.status !== 'COMPLETED') {
+      return NextResponse.json({ error: 'Feedback can only be submitted for completed events' }, { status: 400 });
+    }
+
     // Check if the student actually attended (optional strict check)
     // const attendance = await prisma.attendance.findUnique({
     //   where: { eventId_studentId: { eventId: id, studentId: session.user.id } }

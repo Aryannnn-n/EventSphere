@@ -127,7 +127,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </nav>
 
       {/* User Profile */}
-      <div className="p-3 border-t border-sidebar-border">
+      {/* User Profile */}
+<div className="mt-auto p-3 border-t border-sidebar-border">
         <div
           className={`flex items-center gap-3 px-3 py-2.5 rounded-xl bg-sidebar-accent/50 ${
             collapsed ? 'justify-center' : ''

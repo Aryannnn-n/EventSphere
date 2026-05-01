@@ -25,7 +25,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     if (event.hostId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    let newStatus = event.status;
+    if (event.status !== EventStatus.FULLY_APPROVED && event.status !== EventStatus.GUEST_INVITED) {
+      return NextResponse.json({ error: 'Guest status can only be updated when event is fully approved or guest is already invited' }, { status: 400 });
+    }
+
+    let newStatus: EventStatus = event.status;
     if (guestStatus === 'ACCEPTED' && event.status === EventStatus.GUEST_INVITED) {
       newStatus = EventStatus.ONGOING; // Transition to ONGOING when guest accepts, or we could just keep it as GUEST_INVITED until manually changed. Let's just update guestStatus field and keep EventStatus unless needed.
     }

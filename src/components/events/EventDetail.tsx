@@ -213,10 +213,10 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
       <Tabs defaultValue="actions" className="w-full">
         <TabsList className="w-full justify-start flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="actions" className="rounded-lg data-[state=active]:shadow-sm">Actions</TabsTrigger>
-          {(isHost || role === 'ADMIN') && <TabsTrigger value="attendance" className="rounded-lg data-[state=active]:shadow-sm">Attendance</TabsTrigger>}
+          {(isHost || role === 'ADMIN') && ['GUEST_INVITED', 'ONGOING', 'COMPLETED'].includes(event.status) && <TabsTrigger value="attendance" className="rounded-lg data-[state=active]:shadow-sm">Attendance</TabsTrigger>}
           {(isHost || role === 'ADMIN') && <TabsTrigger value="feedback" className="rounded-lg data-[state=active]:shadow-sm">Feedback</TabsTrigger>}
-          {(isHost || role === 'ADMIN') && <TabsTrigger value="report" className="rounded-lg data-[state=active]:shadow-sm">Report</TabsTrigger>}
-          {isStudent && <TabsTrigger value="my-feedback" className="rounded-lg data-[state=active]:shadow-sm">My Feedback</TabsTrigger>}
+          {(isHost || role === 'ADMIN') && ['ONGOING', 'GUEST_INVITED', 'COMPLETED'].includes(event.status) && <TabsTrigger value="report" className="rounded-lg data-[state=active]:shadow-sm">Report</TabsTrigger>}
+          {isStudent && event.status === 'COMPLETED' && <TabsTrigger value="my-feedback" className="rounded-lg data-[state=active]:shadow-sm">My Feedback</TabsTrigger>}
         </TabsList>
 
         {/* ===== ACTIONS TAB ===== */}

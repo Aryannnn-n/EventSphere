@@ -83,6 +83,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const eventDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (eventDate < today) {
+      return NextResponse.json({ error: 'Event date cannot be in the past' }, { status: 400 });
+    }
+
     const newEvent = await prisma.event.create({
       data: {
         title,

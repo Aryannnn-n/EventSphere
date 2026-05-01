@@ -2,9 +2,15 @@ import { prisma } from '@/lib/prisma';
 import { Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== Role.ADMIN) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const role = searchParams.get('role');
     const department = searchParams.get('department');
@@ -41,6 +47,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== Role.ADMIN) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { name, email, role, department, designation, password } = body;
 

@@ -41,6 +41,11 @@ export async function POST(req: Request, { params }: RouteParams) {
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     if (event.hostId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    const validStatuses = ['ONGOING', 'GUEST_INVITED', 'COMPLETED'];
+    if (!validStatuses.includes(event.status)) {
+      return NextResponse.json({ error: 'Report can only be generated for events that are ongoing, guest invited, or completed' }, { status: 400 });
+    }
+
     // Calculate metrics
     const attendanceCount = await prisma.attendance.count({
       where: { eventId: id, attended: true },

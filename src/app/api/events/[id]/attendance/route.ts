@@ -59,6 +59,10 @@ export async function POST(req: Request, { params }: RouteParams) {
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     if (event.hostId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    if (event.status !== 'ONGOING' && event.status !== 'GUEST_INVITED') {
+      return NextResponse.json({ error: 'Attendance can only be marked when event is ongoing or guest is invited' }, { status: 400 });
+    }
+
     // Upsert attendance record
     const attendance = await prisma.attendance.upsert({
       where: {

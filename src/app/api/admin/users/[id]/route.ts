@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { EventStatus } from '@prisma/client';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -9,6 +11,11 @@ interface RouteParams {
 
 export async function GET(req: Request, { params }: RouteParams) {
   try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== Role.ADMIN) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { id } = await params;
     
     const user = await prisma.user.findUnique({
@@ -38,6 +45,11 @@ export async function GET(req: Request, { params }: RouteParams) {
 
 export async function PATCH(req: Request, { params }: RouteParams) {
   try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== Role.ADMIN) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { id } = await params;
     const body = await req.json();
     
@@ -92,11 +104,30 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
 export async function DELETE(req: Request, { params }: RouteParams) {
   try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== Role.ADMIN) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { id } = await params;
     
-    // Prevent deleting oneself. (Requires checking session, but let's assume it's handled properly or can be added)
-    // We should ideally extract `auth()` and check `session.user.id !== id`
-    // For now, this just deletes the user.
+    if (session.user.id === id) {
+      return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
+    }
+
+    // Check if user hosts active events
+    const activeEvents = await prisma.event.findFirst({
+      where: {
+        hostId: id,
+        status: {
+          notIn: [EventStatus.COMPLETED, EventStatus.CANCELLED]
+        }
+      }
+    });
+
+    if (activeEvents) {
+      return NextResponse.json({ error: 'Cannot delete user who hosts active events' }, { status: 400 });
+    }
 
     await prisma.user.delete({
       where: { id },
