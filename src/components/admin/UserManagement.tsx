@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { MoreHorizontal, Plus, Upload, UserCog } from 'lucide-react';
+import { MoreHorizontal, Plus, Search, Upload, UserCog } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -21,9 +21,18 @@ type User = {
   createdAt: string;
 };
 
+const ROLE_COLORS: Record<string, string> = {
+  ADMIN: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+  HOST: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  HOD: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+  PRINCIPAL: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+  STUDENT: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+};
+
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Dialog states
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
@@ -140,26 +149,45 @@ export default function UserManagement() {
     }
   };
 
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.department || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-primary">User Management</h2>
-          <p className="text-muted-foreground">Manage roles, departments, and credentials.</p>
+          <h2 className="text-2xl font-bold tracking-tight">User Management</h2>
+          <p className="text-sm text-muted-foreground">Manage roles, departments, and credentials.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+          <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="rounded-xl">
             <Upload className="w-4 h-4 mr-2" />
             Import CSV
           </Button>
-          <Button onClick={openAddUser}>
+          <Button onClick={openAddUser} className="rounded-xl">
             <Plus className="w-4 h-4 mr-2" />
             Add User
           </Button>
         </div>
       </div>
 
-      <div className="border rounded-md">
+      {/* Search */}
+      <div className="relative">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search by name, email, role, or department..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 h-11 rounded-xl"
+        />
+      </div>
+
+      <div className="border border-border/50 rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -173,38 +201,48 @@ export default function UserManagement() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">Loading users...</TableCell>
+                <TableCell colSpan={5} className="text-center py-12">
+                  <div className="flex justify-center">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                </TableCell>
               </TableRow>
-            ) : users.length === 0 ? (
+            ) : filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">No users found.</TableCell>
+                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                  {searchQuery ? 'No users match your search.' : 'No users found.'}
+                </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => (
-                <TableRow key={user.id}>
+              filteredUsers.map((user) => (
+                <TableRow key={user.id} className="hover:bg-muted/30">
                   <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <UserCog className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center shrink-0">
+                        <span className="text-[10px] font-bold text-white">
+                          {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                        </span>
+                      </div>
                       {user.name}
                     </div>
                   </TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'ADMIN' ? 'destructive' : 'default'} className="bg-primary hover:bg-primary/90">
+                    <Badge className={`border-0 text-xs ${ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-700'}`}>
                       {user.role}
                     </Badge>
                   </TableCell>
-                  <TableCell>{user.department || '-'}</TableCell>
+                  <TableCell className="text-muted-foreground">{user.department || '—'}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" className="h-8 w-8 p-0 rounded-lg">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="rounded-xl">
                         <DropdownMenuItem onClick={() => openEditUser(user)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600 focus:bg-red-50" onClick={() => handleDeleteUser(user.id)}>
+                        <DropdownMenuItem className="text-red-600 focus:bg-red-50 dark:focus:bg-red-950" onClick={() => handleDeleteUser(user.id)}>
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -219,9 +257,9 @@ export default function UserManagement() {
 
       {/* User Form Dialog */}
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
-            <DialogTitle>{selectedUser ? 'Edit User' : 'Add New User'}</DialogTitle>
+            <DialogTitle className="text-xl">{selectedUser ? 'Edit User' : 'Add New User'}</DialogTitle>
             <DialogDescription>
               {selectedUser ? 'Update user details and role below.' : 'Enter details to create a new user.'}
             </DialogDescription>
@@ -229,30 +267,18 @@ export default function UserManagement() {
           <form onSubmit={handleSaveUser} className="space-y-4 pt-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
+              <Input id="name" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="h-11 rounded-xl" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                disabled={!!selectedUser}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
+              <Input id="email" type="email" required disabled={!!selectedUser} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="h-11 rounded-xl" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="role">Role</Label>
               <select
                 id="role"
                 required
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-11 w-full rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
@@ -265,27 +291,17 @@ export default function UserManagement() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="department">Department (Optional)</Label>
-              <Input
-                id="department"
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-              />
+              <Input id="department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} className="h-11 rounded-xl" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">
                 {selectedUser ? 'New Password (leave blank to keep current)' : 'Password'}
               </Label>
-              <Input
-                id="password"
-                type="password"
-                required={!selectedUser}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
+              <Input id="password" type="password" required={!selectedUser} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="h-11 rounded-xl" />
             </div>
             <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsUserDialogOpen(false)}>Cancel</Button>
-              <Button type="submit">Save User</Button>
+              <Button type="button" variant="outline" onClick={() => setIsUserDialogOpen(false)} className="rounded-xl">Cancel</Button>
+              <Button type="submit" className="rounded-xl">Save User</Button>
             </div>
           </form>
         </DialogContent>
@@ -293,9 +309,9 @@ export default function UserManagement() {
 
       {/* CSV Import Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Import Users via CSV</DialogTitle>
+            <DialogTitle className="text-xl">Import Users via CSV</DialogTitle>
             <DialogDescription>
               Upload a CSV file containing user records. Required columns: email, name, role.
             </DialogDescription>
@@ -303,11 +319,11 @@ export default function UserManagement() {
           <form onSubmit={handleImportCSV} className="space-y-4 pt-4">
             <div className="grid gap-2">
               <Label htmlFor="file">CSV File</Label>
-              <Input id="file" type="file" accept=".csv" required />
+              <Input id="file" type="file" accept=".csv" required className="rounded-xl" />
             </div>
             <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsImportDialogOpen(false)}>Cancel</Button>
-              <Button type="submit">Import</Button>
+              <Button type="button" variant="outline" onClick={() => setIsImportDialogOpen(false)} className="rounded-xl">Cancel</Button>
+              <Button type="submit" className="rounded-xl">Import</Button>
             </div>
           </form>
         </DialogContent>

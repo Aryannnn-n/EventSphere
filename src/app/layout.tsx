@@ -1,13 +1,20 @@
 import type { Metadata } from 'next';
 import { SessionProvider } from 'next-auth/react';
-import { Geist } from 'next/font/google';
+import { Inter } from 'next/font/google';
+import { Toaster } from 'sonner';
 import './globals.css';
 
-const geist = Geist({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'EventSphere',
-  description: 'Automated Event Management System',
+  title: 'EventSphere — College Event Management',
+  description:
+    'Automated Event Management System for MET\'s Institute of Technology. Streamline event proposals, approvals, attendance tracking, and reporting.',
+  keywords: ['college events', 'event management', 'MET', 'EventSphere'],
 };
 
 export default function RootLayout({
@@ -16,9 +23,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={geist.className} suppressHydrationWarning>
-        <SessionProvider>{children}</SessionProvider>
+    <html lang="en" className={inter.variable}>
+      <body className="font-sans antialiased" suppressHydrationWarning>
+        <SessionProvider>
+          {children}
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            toastOptions={{
+              style: {
+                borderRadius: '12px',
+              },
+            }}
+          />
+        </SessionProvider>
       </body>
     </html>
   );

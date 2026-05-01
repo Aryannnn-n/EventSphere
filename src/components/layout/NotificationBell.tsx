@@ -47,35 +47,51 @@ export default function NotificationBell() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative rounded-xl">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600" />
+            <span className="absolute -top-0.5 -right-0.5 h-5 w-5 rounded-full bg-primary text-[10px] font-bold text-white flex items-center justify-center animate-pulse-glow">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
+      <PopoverContent align="end" className="w-80 p-0 rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
           <h4 className="font-semibold text-sm">Notifications</h4>
           {unreadCount > 0 && (
-            <button onClick={markAllAsRead} className="text-xs text-primary hover:underline">
+            <button onClick={markAllAsRead} className="text-xs text-primary hover:underline font-medium">
               Mark all read
             </button>
           )}
         </div>
         <div className="max-h-80 overflow-y-auto">
           {notifications.length === 0 ? (
-            <p className="p-4 text-center text-sm text-muted-foreground">No notifications yet.</p>
+            <div className="p-6 text-center">
+              <Bell className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No notifications yet.</p>
+            </div>
           ) : (
-            <div className="flex flex-col divide-y">
+            <div className="flex flex-col">
               {notifications.map((n) => (
                 <div 
                   key={n.id} 
-                  className={`p-4 text-sm flex flex-col gap-1 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors ${!n.read ? 'bg-zinc-50 dark:bg-zinc-900/50' : ''}`}
+                  className={`px-4 py-3 text-sm flex flex-col gap-1 cursor-pointer transition-colors border-b border-border/30 last:border-0 ${
+                    !n.read
+                      ? 'bg-primary/5 hover:bg-primary/10'
+                      : 'hover:bg-muted/50'
+                  }`}
                   onClick={() => { if (!n.read) markAsRead(n.id); }}
                 >
-                  <p className={n.read ? 'text-muted-foreground' : 'font-medium'}>{n.message}</p>
-                  <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}</span>
+                  <div className="flex items-start gap-2">
+                    {!n.read && (
+                      <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                    )}
+                    <p className={`flex-1 ${n.read ? 'text-muted-foreground' : 'font-medium'}`}>{n.message}</p>
+                  </div>
+                  <span className={`text-[10px] text-muted-foreground ${!n.read ? 'ml-4' : ''}`}>
+                    {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+                  </span>
                 </div>
               ))}
             </div>
