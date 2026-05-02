@@ -29,22 +29,70 @@ export async function POST(req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Guest details are missing from event.' }, { status: 400 });
     }
 
+    const eventDate = new Date(event.date).toLocaleDateString('en-IN', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+    const letterDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+    const refNo = `MET/ITP/${new Date().getFullYear()}/${event.id.substring(0, 4).toUpperCase()}`;
+
     // Send Email
     const emailHtml = `
-      <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2>Invitation to Event: ${event.title}</h2>
-        <p>Dear ${event.guestName},</p>
-        <p>You are cordially invited to be a guest at our upcoming event.</p>
-        <ul>
-          <li><strong>Date:</strong> ${event.date.toDateString()}</li>
-          <li><strong>Time:</strong> ${event.time}</li>
-          <li><strong>Venue:</strong> ${event.venue}</li>
-          <li><strong>Department:</strong> ${event.department}</li>
-        </ul>
-        <p>Please reply to this email to confirm your attendance.</p>
-        <br />
-        <p>Best regards,</p>
-        <p>EventSphere Team</p>
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; background-color: #ffffff; color: #000000; border: 1px solid #eaeaea;">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <h1 style="font-size: 24px; font-weight: bold; margin: 0; line-height: 1.5;">
+            MET's Institute of Technology, Polytechnic<br />
+            Bhujbal Knowledge City,<br />
+            Adgaon, Nashik.
+          </h1>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="text-align: left; font-size: 16px;">Ref No: ${refNo}</td>
+              <td style="text-align: right; font-size: 16px;">Date: ${letterDate}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="font-size: 16px; margin-bottom: 30px;">
+          <p style="margin: 0 0 5px 0;">To,</p>
+          <p style="margin: 0; padding-left: 20px; font-weight: bold;">${event.guestName}</p>
+        </div>
+
+        <div style="font-size: 16px; margin-bottom: 30px;">
+          <p style="margin: 0;"><span style="font-weight: bold;">Subject:</span> Invitation as a Guest for "${event.title}"</p>
+        </div>
+
+        <div style="font-size: 16px; line-height: 1.8; margin-bottom: 50px;">
+          <p>Dear ${event.guestName},</p>
+          <p>We are pleased to invite you as a guest for the upcoming event <strong>"${event.title}"</strong> organized by the ${event.department} department.</p>
+          <p>The details of the event are as follows:<br/>
+          <strong>Date:</strong> ${eventDate}<br/>
+          <strong>Time:</strong> ${event.time}<br/>
+          <strong>Venue:</strong> ${event.venue}</p>
+          <p>We look forward to your gracious presence and valuable insights, which will greatly benefit our students and staff.</p>
+          <p>Thank you.</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 50px;">
+          <tr>
+            <td style="text-align: left; vertical-align: bottom; width: 50%;">
+              ${event.hodSignedAt ? `<p style="color: #2563eb; font-size: 12px; margin: 0 0 5px 0;">Digitally Signed<br/>${new Date(event.hodSignedAt).toLocaleDateString()}</p>` : ''}
+              <p style="font-weight: bold; font-size: 16px; margin: 0 0 5px 0;">Head of Department</p>
+              <p style="color: #4b5563; font-size: 14px; margin: 0;">${event.department}</p>
+            </td>
+            <td style="text-align: right; vertical-align: bottom; width: 50%;">
+              ${event.principalApprovedAt ? `<p style="color: #2563eb; font-size: 12px; margin: 0 0 5px 0;">Digitally Signed<br/>${new Date(event.principalApprovedAt).toLocaleDateString()}</p>` : ''}
+              <p style="font-weight: bold; font-size: 16px; margin: 0 0 5px 0;">Principal</p>
+              <p style="color: #4b5563; font-size: 14px; margin: 0;">MET's Institute of Tech; Polytechnic</p>
+              <p style="color: #4b5563; font-size: 14px; margin: 0;">Bhujbal Knowledge City,</p>
+              <p style="color: #4b5563; font-size: 14px; margin: 0;">Adgaon, Nashik-422 003</p>
+            </td>
+          </tr>
+        </table>
       </div>
     `;
 

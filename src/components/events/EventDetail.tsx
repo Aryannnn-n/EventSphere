@@ -175,9 +175,14 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
           </div>
           <p className="text-muted-foreground mt-1 text-sm">Hosted by {event.host.name} &middot; {event.department}</p>
         </div>
-        <Badge className={`self-start px-3 py-1.5 text-xs font-semibold border-0 ${STATUS_BADGE[event.status] || 'bg-gray-100 text-gray-700'}`}>
-          {event.status.replace(/_/g, ' ')}
-        </Badge>
+        <div className="flex flex-col md:items-end gap-3">
+          <Badge className={`self-start md:self-end px-3 py-1.5 text-xs font-semibold border-0 ${STATUS_BADGE[event.status] || 'bg-gray-100 text-gray-700'}`}>
+            {event.status.replace(/_/g, ' ')}
+          </Badge>
+          <Button variant="outline" size="sm" className="rounded-xl" onClick={() => window.open(`/letter/${event.id}`, '_blank')}>
+            View / Print Letter
+          </Button>
+        </div>
       </div>
 
       {/* Info Cards */}
@@ -262,7 +267,9 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
               <CardHeader><CardTitle className="text-lg">Invite Guest</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-3">Send an email invitation to <strong>{event.guestName}</strong> ({event.guestEmail}).</p>
-                <Button className="rounded-xl" disabled={actionLoading} onClick={() => doAction('guest-invite')}><Mail className="w-4 h-4 mr-2" /> Send Invitation Email</Button>
+                <div className="flex gap-2">
+                  <Button className="rounded-xl" disabled={actionLoading} onClick={() => doAction('guest-invite')}><Mail className="w-4 h-4 mr-2" /> Send Invitation Email</Button>
+                </div>
               </CardContent>
             </Card>
           )}
