@@ -38,10 +38,15 @@ export async function GET(req: Request, { params }: RouteParams) {
       ? feedbacks.reduce((acc, curr) => acc + curr.rating, 0) / feedbacks.length 
       : 0;
 
+    const nlpResult = await prisma.nLPResult.findUnique({
+      where: { eventId: id },
+    });
+
     return NextResponse.json({
       feedbacks,
       averageRating: parseFloat(averageRating.toFixed(1)),
       totalResponses: feedbacks.length,
+      nlpResult,
     });
   } catch (error) {
     console.error('Fetch feedback error:', error);

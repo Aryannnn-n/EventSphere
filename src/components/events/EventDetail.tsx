@@ -26,7 +26,7 @@ type AttendanceRecord = {
 };
 
 type FeedbackRecord = {
-  id: string; rating: number; comment: string; student: { name: string; department: string };
+  id: string; rating: number; comment: string; sentiment?: string; student: { name: string; department: string };
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -54,7 +54,7 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
   const [studentEmail, setStudentEmail] = useState('');
 
   // Feedback
-  const [feedbackData, setFeedbackData] = useState<{ feedbacks: FeedbackRecord[]; averageRating: number; totalResponses: number }>({ feedbacks: [], averageRating: 0, totalResponses: 0 });
+  const [feedbackData, setFeedbackData] = useState<{ feedbacks: FeedbackRecord[]; averageRating: number; totalResponses: number; nlpResult?: any }>({ feedbacks: [], averageRating: 0, totalResponses: 0 });
   const [myRating, setMyRating] = useState(5);
   const [myComment, setMyComment] = useState('');
 
@@ -363,6 +363,49 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
                 </CardContent>
               </Card>
             </div>
+
+            {/* NLP Analysis Section */}
+            {feedbackData.nlpResult && (
+              <div className="space-y-4 my-6 animate-fade-in">
+                <h3 className="text-lg font-semibold">NLP Analysis Summary</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Card className="border-border/50 bg-primary/5">
+                    <CardHeader className="pb-2"><CardTitle className="text-base text-primary">Sentiment Analysis</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm font-medium">
+                          <span className="text-green-600">Positive {feedbackData.nlpResult.positivePercent}%</span>
+                          <span className="text-gray-500">Neutral {feedbackData.nlpResult.neutralPercent}%</span>
+                          <span className="text-red-600">Negative {feedbackData.nlpResult.negativePercent}%</span>
+                        </div>
+                        <div className="h-3 w-full rounded-full overflow-hidden flex">
+                          <div style={{ width: `${feedbackData.nlpResult.positivePercent}%` }} className="bg-green-500"></div>
+                          <div style={{ width: `${feedbackData.nlpResult.neutralPercent}%` }} className="bg-gray-400"></div>
+                          <div style={{ width: `${feedbackData.nlpResult.negativePercent}%` }} className="bg-red-500"></div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border/50 bg-primary/5">
+                    <CardHeader className="pb-2"><CardTitle className="text-base text-primary">Key Themes</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {feedbackData.nlpResult.keywords.map((kw: string, i: number) => (
+                          <Badge key={i} variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-0">{kw}</Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+                <Card className="border-border/50 bg-primary/5">
+                  <CardContent className="pt-6">
+                    <h4 className="text-sm font-semibold mb-2">AI Summary</h4>
+                    <p className="text-sm italic leading-relaxed text-muted-foreground">"{feedbackData.nlpResult.summary}"</p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             <Card className="border-border/50">
               <CardHeader>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
@@ -378,6 +421,7 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
                           const data = await res.json();
                           if (!res.ok) throw new Error(data.error || 'NLP analysis failed');
                           toast.success(data.data?.message || 'NLP Analysis Complete!');
+                          fetchFeedback(); // Refresh to show new NLP data
                         } catch (e: any) { toast.error(e.message); }
                         finally { setActionLoading(false); }
                       }}>
@@ -396,7 +440,14 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
                     <div key={f.id} className="border border-border/50 rounded-xl p-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium text-sm">{f.student.name}</span>
-                        <span className="flex items-center gap-0.5">{Array.from({ length: f.rating }).map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}</span>
+                        <div className="flex items-center gap-3">
+                          {f.sentiment && (
+                            <Badge variant="outline" className={`text-[10px] uppercase tracking-wide border-0 ${f.sentiment === 'POSITIVE' ? 'text-green-700 bg-green-100' : f.sentiment === 'NEGATIVE' ? 'text-red-700 bg-red-100' : 'text-gray-700 bg-gray-100'}`}>
+                              {f.sentiment}
+                            </Badge>
+                          )}
+                          <span className="flex items-center gap-0.5">{Array.from({ length: f.rating }).map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}</span>
+                        </div>
                       </div>
                       <p className="text-sm text-muted-foreground">{f.comment}</p>
                     </div>
