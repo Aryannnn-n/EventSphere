@@ -29,16 +29,12 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Guest status can only be updated when event is fully approved or guest is already invited' }, { status: 400 });
     }
 
-    let newStatus: EventStatus = event.status;
-    if (guestStatus === 'ACCEPTED' && event.status === EventStatus.GUEST_INVITED) {
-      newStatus = EventStatus.ONGOING; // Transition to ONGOING when guest accepts, or we could just keep it as GUEST_INVITED until manually changed. Let's just update guestStatus field and keep EventStatus unless needed.
-    }
-
+    // Guest acceptance does NOT change event status to ONGOING.
+    // Status transitions to ONGOING only when the event date/time arrives (handled in event fetch APIs).
     const updatedEvent = await prisma.event.update({
       where: { id },
       data: {
         guestStatus,
-        status: newStatus,
       },
     });
 

@@ -30,6 +30,25 @@ export async function GET(req: Request, { params }: RouteParams) {
     // Note: HOD and Principal logic can be added if strict isolation is needed.
     // For now, if they have the ID, they can view it.
 
+    // Auto-transition: If event date+time has passed and status is FULLY_APPROVED or GUEST_INVITED, mark as ONGOING
+    if (event.status === 'FULLY_APPROVED' || event.status === 'GUEST_INVITED') {
+      const now = new Date();
+      const eventDateTime = new Date(event.date);
+      const [hours, minutes] = event.time.split(':').map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        eventDateTime.setHours(hours, minutes, 0, 0);
+      }
+
+      if (eventDateTime <= now) {
+        event.status = 'ONGOING' as any;
+        // Update in DB (fire-and-forget)
+        prisma.event.update({
+          where: { id },
+          data: { status: 'ONGOING' },
+        }).catch((err: any) => console.error('Auto-transition error:', err));
+      }
+    }
+
     return NextResponse.json(event);
   } catch (error) {
     console.error('Fetch event error:', error);

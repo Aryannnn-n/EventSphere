@@ -297,7 +297,7 @@ export default function Home() {
       </main>
 
       {/* ===== FOOTER ===== */}
-      <footer className="gradient-dark text-white py-16">
+      <footer className="gradient-dark text-white py-6">
         <div className="container mx-auto px-6">
           {/* Brand */}
           <div className="text-center mb-12">
@@ -313,9 +313,9 @@ export default function Home() {
           {/* Developer Team */}
           <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-20 mb-12">
             {[
-              { name: 'Keshav Potewar', role: 'Developer', size: 'w-14 h-14' },
+              { name: 'Keshav Potewar', role: 'Developer', size: 'w-18 h-18' },
               { name: 'Aryan Chavan', role: 'Developer', size: 'w-18 h-18' },
-              { name: 'Amol Sonawane', role: 'Developer', size: 'w-14 h-14' },
+              { name: 'Amol Sonawane', role: 'Developer', size: 'w-18 h-18' },
             ].map((dev, i) => (
               <div key={i} className="flex flex-col items-center gap-3 group">
                 <div className={`${dev.size} rounded-full bg-white/10 border-2 border-white/10 group-hover:border-primary transition-colors flex items-center justify-center`}>
@@ -330,7 +330,7 @@ export default function Home() {
           </div>
 
           {/* Bottom bar */}
-          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-white/40">
+          <div className="border-t border-white/10 pt-4 flex flex-col md:flex-row items-center justify-between text-sm text-white/40">
             <p>&copy; {new Date().getFullYear()} EventSphere. All rights reserved.</p>
             <div className="flex items-center gap-6 mt-4 md:mt-0">
               <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>

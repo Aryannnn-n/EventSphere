@@ -57,6 +57,38 @@ export async function GET(req: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Auto-transition: If event date+time has passed and status is FULLY_APPROVED or GUEST_INVITED, mark as ONGOING
+    const now = new Date();
+    const updatePromises: Promise<any>[] = [];
+
+    for (const event of events) {
+      if (event.status === EventStatus.FULLY_APPROVED || event.status === EventStatus.GUEST_INVITED) {
+        const eventDateTime = new Date(event.date);
+        // Parse time string (e.g., "14:30") and apply to the event date
+        const [hours, minutes] = event.time.split(':').map(Number);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          eventDateTime.setHours(hours, minutes, 0, 0);
+        }
+
+        if (eventDateTime <= now) {
+          event.status = EventStatus.ONGOING;
+          updatePromises.push(
+            prisma.event.update({
+              where: { id: event.id },
+              data: { status: EventStatus.ONGOING },
+            })
+          );
+        }
+      }
+    }
+
+    // Fire-and-forget the status updates (don't block the response)
+    if (updatePromises.length > 0) {
+      Promise.all(updatePromises).catch((err) =>
+        console.error('Auto-transition status update error:', err)
+      );
+    }
+
     return NextResponse.json(events);
   } catch (error) {
     console.error('Fetch events error:', error);
