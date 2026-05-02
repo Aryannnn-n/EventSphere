@@ -364,7 +364,32 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
               </Card>
             </div>
             <Card className="border-border/50">
-              <CardHeader><CardTitle className="text-lg">Feedback</CardTitle></CardHeader>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+                  <CardTitle className="text-lg">Feedback</CardTitle>
+                  {isHost && event.status === 'COMPLETED' && feedbackData.feedbacks.length > 0 && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="rounded-xl" disabled={actionLoading} onClick={async () => {
+                        setActionLoading(true);
+                        try {
+                          const res = await fetch('/api/nlp/analyze', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventId: event.id }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.error || 'NLP analysis failed');
+                          toast.success(data.data?.message || 'NLP Analysis Complete!');
+                        } catch (e: any) { toast.error(e.message); }
+                        finally { setActionLoading(false); }
+                      }}>
+                        Run NLP Analysis
+                      </Button>
+                      <Button size="sm" className="rounded-xl" disabled={actionLoading} onClick={() => doAction('feedback/guest-summary', 'POST')}>
+                        Send Guest Summary Email
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
               <CardContent>
                 {feedbackData.feedbacks.length === 0 ? <p className="text-sm text-muted-foreground">No feedback yet.</p> : (
                   <div className="space-y-3">{feedbackData.feedbacks.map((f) => (
