@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CalendarCheck, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { signIn } from 'next-auth/react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -71,27 +72,32 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Panel — Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden gradient-hero items-center justify-center p-12">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 rounded-full border-2 border-white/20" />
-          <div className="absolute bottom-32 right-16 w-96 h-96 rounded-full border-2 border-white/10" />
-          <div className="absolute top-1/2 left-1/3 w-48 h-48 rounded-full border-2 border-white/15" />
+      {/* Left Panel — Branding with Background Image */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12">
+        <div className="absolute inset-0">
+          <Image
+            src="/login.png"
+            alt="MET Campus"
+            fill
+            className="object-cover"
+            priority
+          />
+          {/* Overlay to ensure text readability */}
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
         </div>
 
         <div className="relative z-10 text-white text-center max-w-md">
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
-              <CalendarCheck className="w-7 h-7 text-white" />
+            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center border border-white/30 shadow-2xl overflow-hidden p-2">
+              <Image src="/logo.png" alt="MET Logo" width={60} height={60} className="object-contain" />
             </div>
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight mb-4">EventSphere</h1>
-          <p className="text-lg text-white/70 leading-relaxed mb-8">
+          <h1 className="text-4xl font-extrabold tracking-tight mb-4 drop-shadow-lg">EventSphere</h1>
+          <p className="text-lg text-white/90 leading-relaxed mb-8 font-medium drop-shadow-md">
             MET&apos;s Institute of Technology
           </p>
-          <div className="w-16 h-0.5 bg-white/30 mx-auto mb-8" />
-          <p className="text-sm text-white/50 leading-relaxed">
+          <div className="w-16 h-1 bg-white/50 mx-auto mb-8 rounded-full shadow-lg" />
+          <p className="text-sm text-white/80 leading-relaxed font-medium drop-shadow-md">
             Streamline your college events from proposal to final report with automated approvals,
             guest management, and comprehensive reporting.
           </p>

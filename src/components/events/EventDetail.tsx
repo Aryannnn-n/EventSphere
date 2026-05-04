@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Calendar, Clock, Edit, Loader2, Mail, MapPin, Star, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Edit, Loader2, Mail, MapPin, RefreshCw, Shield, Star, Trash2, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -73,6 +73,7 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
   const [editFormData, setEditFormData] = useState({
     title: '', description: '', date: '', time: '', venue: '', guestName: '', guestEmail: ''
   });
+  const [activeTab, setActiveTab] = useState('actions');
 
   // Generic Email Preview
   const [previewData, setPreviewData] = useState<{
@@ -239,7 +240,7 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="actions" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="actions" className="rounded-lg data-[state=active]:shadow-sm">Actions</TabsTrigger>
           {(isHost || role === 'ADMIN') && ['GUEST_INVITED', 'ONGOING', 'COMPLETED'].includes(event.status) && <TabsTrigger value="attendance" className="rounded-lg data-[state=active]:shadow-sm">Attendance</TabsTrigger>}
@@ -297,16 +298,21 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
                       day: '2-digit', month: '2-digit', year: 'numeric'
                     });
                     const defaultHtml = `
-<p><span style="font-weight: bold;">Subject:</span> Invitation as a Guest for "${event.title}"</p>
-<br/>
-<p>Dear ${event.guestName},</p>
-<p>We are pleased to invite you as a guest for the upcoming event <strong>"${event.title}"</strong> organized by the ${event.department} department.</p>
-<p>The details of the event are as follows:<br/>
-<strong>Date:</strong> ${eventDate}<br/>
-<strong>Time:</strong> ${event.time}<br/>
-<strong>Venue:</strong> ${event.venue}</p>
-<p>We look forward to your gracious presence and valuable insights, which will greatly benefit our students and staff.</p>
-<p>Thank you.</p>
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 25px;">
+    <img src="http://localhost:3000/logo.png" alt="MET Logo" style="width: 80px; height: 80px; object-fit: contain;">
+  </div>
+  <p><span style="font-weight: bold;">Subject:</span> Invitation as a Guest for "${event.title}"</p>
+  <br/>
+  <p>Dear ${event.guestName},</p>
+  <p>We are pleased to invite you as a guest for the upcoming event <strong>"${event.title}"</strong> organized by the ${event.department} department.</p>
+  <p>The details of the event are as follows:<br/>
+  <strong>Date:</strong> ${eventDate}<br/>
+  <strong>Time:</strong> ${event.time}<br/>
+  <strong>Venue:</strong> ${event.venue}</p>
+  <p>We look forward to your gracious presence and valuable insights, which will greatly benefit our students and staff.</p>
+  <p>Thank you.</p>
+</div>
 `;
                     setPreviewData({
                       isOpen: true,
@@ -331,11 +337,54 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
               </CardContent>
             </Card>
           )}
-          {/* Host: Delete */}
-          {isHost && !['COMPLETED', 'ONGOING'].includes(event.status) && (
-            <Card className="border-red-200 dark:border-red-800/30 border-border/50">
-              <CardContent className="pt-4">
-                <Button variant="destructive" className="rounded-xl" onClick={async () => { if (!confirm('Delete this event permanently?')) return; const res = await fetch(`/api/events/${eventId}`, { method: 'DELETE' }); if (res.ok) { toast.success('Event deleted'); router.push(backPath); } }}>Delete Event</Button>
+          {/* Host: Danger Zone / Manual Override */}
+          {isHost && (
+            <Card className="border-red-200 dark:border-red-800/30 border-border/50 bg-red-50/5">
+              <CardHeader>
+                <CardTitle className="text-lg text-red-600 flex items-center gap-2">
+                  <Shield className="w-5 h-5" /> Danger Zone / Manual Override
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Manual Status Transition</Label>
+                  <p className="text-xs text-muted-foreground mb-2">Use this to manually move the event status if it becomes stuck.</p>
+                  <select 
+                    className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm focus:ring-2 focus:ring-red-500 outline-none" 
+                    value={event.status} 
+                    onChange={async (e) => {
+                      if (!confirm(`Manually change status to ${e.target.value.replace(/_/g, ' ')}?`)) return;
+                      await doAction('', 'PATCH', { status: e.target.value });
+                      fetchEvent();
+                    }}
+                  >
+                    {Object.keys(STATUS_BADGE).map(status => (
+                      <option key={status} value={status}>{status.replace(/_/g, ' ')}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="pt-6 mt-6 border-t border-red-100 dark:border-red-900/30">
+                  <Label className="text-sm font-semibold text-red-600">Delete Event</Label>
+                  <p className="text-xs text-muted-foreground mb-4 mt-1">Once deleted, an event cannot be recovered. All attendance and feedback records will be permanently removed.</p>
+                  <Button 
+                    variant="destructive" 
+                    className="rounded-xl w-full sm:w-auto shadow-lg shadow-red-500/20" 
+                    onClick={async () => { 
+                      if (!confirm('CRITICAL: Delete this event permanently? This will remove all associated reports, feedback, and attendance records.')) return; 
+                      const res = await fetch(`/api/events/${eventId}`, { method: 'DELETE' }); 
+                      if (res.ok) { 
+                        toast.success('Event deleted successfully'); 
+                        router.push(backPath); 
+                      } else {
+                        const data = await res.json();
+                        toast.error(data.error || 'Failed to delete event');
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" /> Delete Event Permanently
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -535,7 +584,18 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
             {report ? (
               <>
                 <Card className="border-border/50">
-                  <CardHeader><CardTitle className="text-lg">Generated Report</CardTitle></CardHeader>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-lg">Generated Report</CardTitle>
+                      <Button variant="outline" size="sm" className="rounded-xl" onClick={() => {
+                        setReportSummary(report.summary);
+                        setReportFinancials(report.financials || '');
+                        setReport(null);
+                      }}>
+                        <RefreshCw className="w-3.5 h-3.5 mr-2" /> Edit & Regenerate
+                      </Button>
+                    </div>
+                  </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-muted/50 rounded-xl p-4">
@@ -555,6 +615,9 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
                   const defaultHtml = `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
   <div style="background-color: #1a1a2e; color: #ffffff; padding: 30px; text-align: center;">
+    <div style="background: white; width: 60px; height: 60px; border-radius: 10px; padding: 5px; margin: 0 auto 15px;">
+      <img src="http://localhost:3000/logo.png" alt="MET Logo" style="width: 100%; height: 100%; object-fit: contain;">
+    </div>
     <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Event Final Report</h1>
     <p style="margin: 10px 0 0; opacity: 0.8; font-size: 14px;">${event.title}</p>
   </div>

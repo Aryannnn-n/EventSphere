@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -69,85 +70,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return pathname.startsWith(href);
   };
 
-  const sidebarContent = (
-    <>
-      {/* Brand */}
-      <div className="flex items-center justify-between h-18 px-4 border-b border-sidebar-border">
-        <Link href={`/${role.toLowerCase()}`} className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center shadow-md shadow-red-500/20 shrink-0">
-            <CalendarCheck className="w-5 h-5 text-white" />
-          </div>
-          {!collapsed && (
-            <span className="text-lg font-bold tracking-tight whitespace-nowrap">
-              Event<span className="text-primary">Sphere</span>
-            </span>
-          )}
-        </Link>
-        {/* Collapse button (desktop only) */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex w-7 h-7 rounded-lg hover:bg-sidebar-accent items-center justify-center text-muted-foreground transition-colors"
-        >
-          <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
-        </button>
-        {/* Close button (mobile) */}
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="lg:hidden w-7 h-7 rounded-lg hover:bg-sidebar-accent flex items-center justify-center"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {!collapsed && (
-          <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
-            Navigation
-          </p>
-        )}
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                active
-                  ? 'bg-primary text-white shadow-md shadow-primary/20'
-                  : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground'
-              } ${collapsed ? 'justify-center' : ''}`}
-            >
-              <item.icon className="w-5 h-5 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* User Profile */}
-      {/* User Profile */}
-<div className="mt-auto p-3 border-t border-sidebar-border">
-        <div
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl bg-sidebar-accent/50 ${
-            collapsed ? 'justify-center' : ''
-          }`}
-        >
-          <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-white">{initials}</span>
-          </div>
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate">{userName}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{role}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
-
   return (
     <div className="min-h-screen flex bg-muted/30">
       {/* ===== Mobile Sidebar Overlay ===== */}
@@ -161,14 +83,84 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ===== Sidebar ===== */}
       <aside
         className={`
-          fixed top-0 left-0 z-50 h-full bg-sidebar border-r border-sidebar-border flex flex-col
+          fixed top-0 left-0 z-50 h-screen bg-sidebar border-r border-sidebar-border flex flex-col
           transition-all duration-300 ease-in-out
           lg:sticky lg:top-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           ${collapsed ? 'w-[72px]' : 'w-64'}
         `}
       >
-        {sidebarContent}
+        {/* Brand */}
+        <div className="flex items-center justify-between h-18 px-4 border-b border-sidebar-border">
+          <Link href={`/${role.toLowerCase()}`} className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0 border border-border/50 overflow-hidden">
+              <Image src="/logo.png" alt="MET Logo" width={40} height={40} className="object-contain" />
+            </div>
+            {!collapsed && (
+              <span className="text-lg font-bold tracking-tight whitespace-nowrap">
+                Event<span className="text-primary">Sphere</span>
+              </span>
+            )}
+          </Link>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="hidden lg:flex w-7 h-7 rounded-lg hover:bg-sidebar-accent items-center justify-center text-muted-foreground transition-colors"
+          >
+            <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
+          </button>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden w-7 h-7 rounded-lg hover:bg-sidebar-accent flex items-center justify-center"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
+          {!collapsed && (
+            <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+              Navigation
+            </p>
+          )}
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  active
+                    ? 'bg-primary text-white shadow-md shadow-primary/20'
+                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground'
+                } ${collapsed ? 'justify-center' : ''}`}
+              >
+                <item.icon className="w-5 h-5 shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User Profile - Pinned to bottom */}
+        <div className="mt-auto border-t border-sidebar-border p-3">
+          <div
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl bg-sidebar-accent/50 ${
+              collapsed ? 'justify-center' : ''
+            }`}
+          >
+            <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center shrink-0 shadow-sm">
+              <span className="text-xs font-bold text-white">{initials}</span>
+            </div>
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{userName}</p>
+                <p className="text-[10px] text-muted-foreground truncate uppercase tracking-wider font-medium">{role}</p>
+              </div>
+            )}
+          </div>
+        </div>
       </aside>
 
       {/* ===== Main Content ===== */}

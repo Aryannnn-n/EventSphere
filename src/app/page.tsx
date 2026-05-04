@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { auth } from '@/lib/auth';
 
 /* ───── Static Data ───── */
 
@@ -82,15 +83,20 @@ const stats = [
 
 /* ───── Page Component ───── */
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+  const role = (session?.user as any)?.role?.toLowerCase();
+  const dashboardHref = role ? `/${role}` : '/login';
+  const buttonText = session ? 'Go to Dashboard' : 'Login to Dashboard';
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* ===== NAVBAR ===== */}
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="container mx-auto px-6 h-18 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-red-500/20 group-hover:shadow-red-500/40 transition-shadow">
-              <CalendarCheck className="w-5 h-5 text-white" />
+            <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shadow-lg border border-border/50 overflow-hidden p-1">
+              <Image src="/logo.png" alt="MET Logo" width={40} height={40} className="object-contain" />
             </div>
             <span className="text-xl font-bold tracking-tight">
               Event<span className="text-primary">Sphere</span>
@@ -107,9 +113,9 @@ export default function Home() {
               Roles
             </Link>
           </nav>
-          <Link href="/login">
+          <Link href={dashboardHref}>
             <Button size="lg" className="rounded-xl px-6 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
-              Login to Dashboard
+              {buttonText}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
@@ -155,9 +161,9 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up delay-300">
-              <Link href="/login">
+              <Link href={dashboardHref}>
                 <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg font-semibold rounded-xl bg-white text-primary hover:bg-white/90 shadow-xl shadow-black/20 transition-all">
-                  Get Started
+                  {session ? 'Go to Dashboard' : 'Get Started'}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>

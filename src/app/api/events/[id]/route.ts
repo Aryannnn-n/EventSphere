@@ -70,10 +70,16 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     if (event.hostId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    // Only allow editing if not fully approved or in progress.
-    const nonEditableStatuses = ['FULLY_APPROVED', 'GUEST_INVITED', 'ONGOING', 'COMPLETED', 'CANCELLED'];
-    if (nonEditableStatuses.includes(event.status)) {
-      return NextResponse.json({ error: 'Cannot edit event in current status' }, { status: 400 });
+    // If the user is specifically trying to update the status (manual override),
+    // we skip the non-editable check.
+    const isStatusOnly = Object.keys(body).length === 1 && body.status;
+    
+    if (!isStatusOnly) {
+      // Only allow editing content if not fully approved or in progress.
+      const nonEditableStatuses = ['FULLY_APPROVED', 'GUEST_INVITED', 'ONGOING', 'COMPLETED', 'CANCELLED'];
+      if (nonEditableStatuses.includes(event.status)) {
+        return NextResponse.json({ error: 'Cannot edit event content in current status. Use Manual Override to change status first.' }, { status: 400 });
+      }
     }
 
     const updatedEvent = await prisma.event.update({
@@ -86,11 +92,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         venue: body.venue,
         guestName: body.guestName,
         guestEmail: body.guestEmail,
-        // Reset approvals if edited
-        status: 'PENDING_HOD_REVIEW',
-        hodReviewAction: null,
-        principalAction: null,
-        hodSignatureAction: null,
+        // Allow manual status update, or fallback to review if editing
+        status: body.status || 'PENDING_HOD_REVIEW',
+        hodReviewAction: body.status ? undefined : null,
+        principalAction: body.status ? undefined : null,
+        hodSignatureAction: body.status ? undefined : null,
       },
     });
 
@@ -104,18 +110,23 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 export async function DELETE(req: Request, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== Role.HOST) {
-      return NextResponse.json({ error: 'Forbidden. Only Host can delete.' }, { status: 403 });
+    if (!session?.user || (session.user.role !== Role.HOST && session.user.role !== Role.ADMIN)) {
+      return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
     }
 
     const { id } = await params;
     
     const event = await prisma.event.findUnique({ where: { id } });
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
-    if (event.hostId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (session.user.role === Role.HOST && event.hostId !== session.user.id) {
+       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    if (event.status === 'COMPLETED' || event.status === 'ONGOING') {
-      return NextResponse.json({ error: 'Cannot delete ongoing or completed events' }, { status: 400 });
+    // Allow deleting even if ongoing, but keep COMPLETED restricted unless admin?
+    // Actually, user said "event is not completed so there give me delete button".
+    // So if it's NOT completed, allow deletion.
+    if (event.status === 'COMPLETED' && session.user.role !== Role.ADMIN) {
+      return NextResponse.json({ error: 'Cannot delete completed events' }, { status: 400 });
     }
 
     // Cascade delete related records

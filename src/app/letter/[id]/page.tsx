@@ -6,6 +6,8 @@ import PrintButton from './PrintButton';
 import { auth } from '@/lib/auth';
 import EditableDocument from '@/components/events/EditableDocument';
 
+import Image from 'next/image';
+
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
@@ -62,15 +64,18 @@ export default async function LetterPage({ params }: RouteParams) {
 
       {/* Notice paper */}
       <article className="mx-auto max-w-4xl bg-white shadow-xl print:shadow-none px-16 py-10 print:p-8 text-black">
-        {/* Header */}
-        <header className="text-center mb-6">
-          <h1 className="text-2xl md:text-[26px] font-semibold leading-snug text-gray-900">
-            MET's Institute of Technology, Polytechnic
-            <br />
-            Bhujbal Knowledge City,
-            <br />
-            Adgaon, Nashik.
-          </h1>
+        {/* Header with Logo */}
+        <header className="flex items-center justify-center gap-6 mb-8 border-b-2 border-black pb-6">
+          <div className="shrink-0">
+            <Image src="/logo.png" alt="MET Logo" width={100} height={100} className="object-contain" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl md:text-[28px] font-bold leading-tight text-black">
+              MET's Institute of Technology, Polytechnic
+            </h1>
+            <p className="text-lg font-medium text-gray-800">Bhujbal Knowledge City, Adgaon, Nashik - 422003</p>
+            <p className="text-sm font-medium text-gray-600 mt-1 uppercase tracking-wider">Affiliated to MSBTE | Approved by AICTE</p>
+          </div>
         </header>
 
         {/* Date */}
