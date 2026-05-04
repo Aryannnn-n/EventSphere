@@ -7,12 +7,17 @@ import { auth } from '@/lib/auth';
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
     const { searchParams } = new URL(req.url);
     const role = searchParams.get('role');
+
+    // Allow ADMIN to see everything, but allow HOST only to see students
+    const isAllowed = 
+      session?.user.role === Role.ADMIN || 
+      (session?.user.role === Role.HOST && role === Role.STUDENT);
+
+    if (!session?.user || !isAllowed) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const department = searchParams.get('department');
 
     const where: any = {};

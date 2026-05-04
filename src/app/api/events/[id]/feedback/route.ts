@@ -99,7 +99,23 @@ export async function POST(req: Request, { params }: RouteParams) {
       },
     });
 
-    return NextResponse.json({ message: 'Feedback submitted successfully', feedback });
+    // Auto-mark as present when feedback is submitted
+    await prisma.attendance.upsert({
+      where: {
+        eventId_studentId: {
+          eventId: id,
+          studentId: session.user.id,
+        },
+      },
+      update: { attended: true },
+      create: {
+        eventId: id,
+        studentId: session.user.id,
+        attended: true,
+      },
+    });
+
+    return NextResponse.json({ message: 'Feedback submitted and attendance marked successfully', feedback });
   } catch (error) {
     console.error('Submit feedback error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
