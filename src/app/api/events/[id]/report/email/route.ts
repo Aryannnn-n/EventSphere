@@ -22,6 +22,7 @@ export async function POST(req: Request, { params }: RouteParams) {
       where: { id },
       include: {
         report: true,
+        host: { select: { name: true } },
       }
     });
 
