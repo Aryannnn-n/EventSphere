@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import PrintButton from './PrintButton';
+import { auth } from '@/lib/auth';
+import EditableDocument from '@/components/events/EditableDocument';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -22,6 +24,9 @@ export default async function LetterPage({ params }: RouteParams) {
     notFound();
   }
 
+  const session = await auth();
+  const isHost = session?.user?.id === event.hostId;
+
   // Format date
   const eventDate = new Date(event.date).toLocaleDateString('en-IN', {
     day: '2-digit',
@@ -34,6 +39,19 @@ export default async function LetterPage({ params }: RouteParams) {
     month: '2-digit',
     year: 'numeric'
   });
+
+  const defaultHtml = `
+<p><span class="font-semibold">Subject:</span> Invitation as a Guest for "${event.title}"</p>
+<br/>
+<p>Dear ${event.guestName},</p>
+<p>We are pleased to invite you as a guest for the upcoming event <strong>"${event.title}"</strong> organized by the ${event.department} department.</p>
+<p>The details of the event are as follows:<br/>
+<strong>Date:</strong> ${eventDate}<br/>
+<strong>Time:</strong> ${event.time}<br/>
+<strong>Venue:</strong> ${event.venue}</p>
+<p>We look forward to your gracious presence and valuable insights, which will greatly benefit our students and staff.</p>
+<p>Thank you.</p>
+`;
 
   return (
     <div className="min-h-screen bg-muted/30 py-8 px-4 print:bg-white print:p-0">
@@ -67,35 +85,14 @@ export default async function LetterPage({ params }: RouteParams) {
           <p>{event.guestName}</p>
         </div>
 
-        {/* Subject */}
-        <p className="text-gray-900 text-lg mb-6">
-          <span className="font-semibold">Subject:</span> Invitation as a Guest for "{event.title}"
-        </p>
-
         {/* Body */}
-        <div className="space-y-4 text-gray-900 text-lg leading-relaxed mb-8">
-          <p>
-            Dear {event.guestName},
-          </p>
-          <p>
-            We are pleased to invite you as a guest for the upcoming event <strong>"{event.title}"</strong> organized by the {event.department} department.
-          </p>
-          <p>
-            The details of the event are as follows:
-            <br/>
-            <strong>Date:</strong> {eventDate}
-            <br/>
-            <strong>Time:</strong> {event.time}
-            <br/>
-            <strong>Venue:</strong> {event.venue}
-          </p>
-          <p>
-            We look forward to your gracious presence and valuable insights, which will greatly benefit our students and staff.
-          </p>
-          <p>
-            Thank you.
-          </p>
-        </div>
+        <EditableDocument 
+          eventId={event.id}
+          documentType="letter"
+          isHost={isHost}
+          customHtml={event.customLetterHtml}
+          defaultHtml={defaultHtml}
+        />
 
         {/* Footer / signature area */}
         <div className="flex justify-between items-end mt-16">

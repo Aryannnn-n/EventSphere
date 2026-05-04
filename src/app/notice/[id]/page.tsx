@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import PrintButton from './PrintButton';
+import { auth } from '@/lib/auth';
+import EditableDocument from '@/components/events/EditableDocument';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -20,6 +22,9 @@ export default async function NoticePage({ params }: RouteParams) {
     notFound();
   }
 
+  const session = await auth();
+  const isHost = session?.user?.id === event.hostId;
+
   const eventDate = new Date(event.date).toLocaleDateString('en-IN', {
     day: '2-digit',
     month: '2-digit',
@@ -31,6 +36,19 @@ export default async function NoticePage({ params }: RouteParams) {
     month: '2-digit',
     year: 'numeric'
   });
+
+  const defaultHtml = `
+<p><span class="font-semibold">Subject:</span> Notice regarding "${event.title}"</p>
+<br/>
+<p>All the students of ${event.department} department are hereby informed that our department is organizing an event <strong>"${event.title}"</strong>.</p>
+<p>The details of the event are as follows:<br/>
+<strong>Date:</strong> ${eventDate}<br/>
+<strong>Time:</strong> ${event.time}<br/>
+<strong>Venue:</strong> ${event.venue}<br/>
+<strong>Guest:</strong> ${event.guestName}</p>
+<p>${event.description}</p>
+<p>All students are required to attend the event punctually. Attendance will be recorded.</p>
+`;
 
   return (
     <div className="min-h-screen bg-muted/30 py-8 px-4 print:bg-white print:p-0">
@@ -58,32 +76,13 @@ export default async function NoticePage({ params }: RouteParams) {
           <p className="text-gray-900 text-lg font-semibold">Date: {letterDate}</p>
         </div>
 
-        <p className="text-gray-900 text-lg mb-6">
-          <span className="font-semibold">Subject:</span> Notice regarding "{event.title}"
-        </p>
-
-        <div className="space-y-4 text-gray-900 text-lg leading-relaxed mb-8">
-          <p>
-            All the students of {event.department} department are hereby informed that our department is organizing an event <strong>"{event.title}"</strong>. 
-          </p>
-          <p>
-            The details of the event are as follows:
-            <br/>
-            <strong>Date:</strong> {eventDate}
-            <br/>
-            <strong>Time:</strong> {event.time}
-            <br/>
-            <strong>Venue:</strong> {event.venue}
-            <br/>
-            <strong>Guest:</strong> {event.guestName}
-          </p>
-          <p>
-            {event.description}
-          </p>
-          <p>
-            All students are required to attend the event punctually. Attendance will be recorded.
-          </p>
-        </div>
+        <EditableDocument 
+          eventId={event.id}
+          documentType="notice"
+          isHost={isHost}
+          customHtml={event.customNoticeHtml}
+          defaultHtml={defaultHtml}
+        />
 
         <div className="grid grid-cols-3 gap-2 items-end mt-16 text-center">
           <div className="text-gray-900 text-left">

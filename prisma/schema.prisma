@@ -108,6 +108,10 @@ model Event {
   reportGeneratedAt     DateTime?
   reportEmailedAt       DateTime?
 
+  // Custom Documents
+  customLetterHtml      String?
+  customNoticeHtml      String?
+
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
 
