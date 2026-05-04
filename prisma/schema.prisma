@@ -58,9 +58,48 @@ model User {
   updatedAt       DateTime  @updatedAt
 
   hostedEvents    Event[]   @relation("HostedEvents")
+  hostedNotices   Notice[]  @relation("HostedNotices")
   attendance      Attendance[]
   feedback        Feedback[]
   notifications   Notification[]
+}
+
+enum NoticeType {
+  EXAM
+  SCHEDULE
+  PLACEMENT
+  GENERAL
+}
+
+enum NoticeStatus {
+  PENDING_HOD_REVIEW
+  PENDING_PRINCIPAL_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+model Notice {
+  id                    String       @id @default(cuid())
+  type                  NoticeType
+  title                 String
+  content               Json         // Stores tabular data, placement details, etc.
+  department            String
+  
+  hostId                String
+  host                  User         @relation("HostedNotices", fields: [hostId], references: [id])
+  
+  status                NoticeStatus @default(PENDING_HOD_REVIEW)
+  
+  hodReviewAction       ApprovalAction?
+  hodReviewReason       String?
+  hodReviewedAt         DateTime?
+  
+  principalAction       ApprovalAction?
+  principalReason       String?
+  principalApprovedAt   DateTime?
+  
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 }
 
 model Event {

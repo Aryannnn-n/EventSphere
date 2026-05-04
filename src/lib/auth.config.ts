@@ -12,6 +12,7 @@ export const authConfig = {
         token.id = user.id;
         token.role = user.role;
         token.isFirstLogin = user.isFirstLogin;
+        token.department = (user as any).department;
       }
       return token;
     },
@@ -20,6 +21,7 @@ export const authConfig = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.isFirstLogin = token.isFirstLogin as boolean;
+        (session.user as any).department = token.department as string;
       }
       return session;
     },

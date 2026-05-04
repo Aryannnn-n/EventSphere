@@ -5,6 +5,7 @@ import {
   CalendarCheck,
   ChevronLeft,
   ClipboardList,
+  FileText,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -29,22 +30,27 @@ const roleNavItems: Record<string, NavItem[]> = {
   ADMIN: [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Manage Users', href: '/admin/users', icon: Users },
+    { label: 'Notices', href: '/admin/notices', icon: FileText },
   ],
   HOST: [
     { label: 'Dashboard', href: '/host', icon: LayoutDashboard },
     { label: 'My Events', href: '/host', icon: ClipboardList },
+    { label: 'Notices', href: '/host/notices', icon: FileText },
   ],
   HOD: [
     { label: 'Dashboard', href: '/hod', icon: LayoutDashboard },
     { label: 'Events', href: '/hod', icon: ClipboardList },
+    { label: 'Notices', href: '/hod/notices', icon: FileText },
   ],
   PRINCIPAL: [
     { label: 'Dashboard', href: '/principal', icon: LayoutDashboard },
     { label: 'Events', href: '/principal', icon: ClipboardList },
+    { label: 'Notices', href: '/principal/notices', icon: FileText },
   ],
   STUDENT: [
     { label: 'Dashboard', href: '/student', icon: LayoutDashboard },
     { label: 'Events', href: '/student', icon: ClipboardList },
+    { label: 'Notices', href: '/student/notices', icon: FileText },
   ],
 };
 
