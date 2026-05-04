@@ -9,7 +9,7 @@ export default function PrintButton() {
   return (
     <Button onClick={handlePrint} size="lg" className="gap-2">
       <Printer className="w-4 h-4" />
-      Print Letter
+      Print Notice
     </Button>
   );
 }

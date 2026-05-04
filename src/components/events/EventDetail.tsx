@@ -179,9 +179,18 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
           <Badge className={`self-start md:self-end px-3 py-1.5 text-xs font-semibold border-0 ${STATUS_BADGE[event.status] || 'bg-gray-100 text-gray-700'}`}>
             {event.status.replace(/_/g, ' ')}
           </Badge>
-          <Button variant="outline" size="sm" className="rounded-xl" onClick={() => window.open(`/letter/${event.id}`, '_blank')}>
-            View / Print Letter
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {isHost && (
+              <Button variant="outline" size="sm" className="rounded-xl" onClick={() => window.open(`/letter/${event.id}`, '_blank')}>
+                View Guest Letter
+              </Button>
+            )}
+            {(isHost || isHod || isPrincipal) && (
+              <Button variant="outline" size="sm" className="rounded-xl" onClick={() => window.open(`/notice/${event.id}`, '_blank')}>
+                Print Notice
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
