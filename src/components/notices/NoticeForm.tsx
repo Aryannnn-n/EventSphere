@@ -6,17 +6,27 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Info } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 type NoticeType = 'EXAM' | 'SCHEDULE' | 'PLACEMENT' | 'GENERAL';
 
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const TIME_SLOTS = [
+  '08:00 - 09:00',
+  '09:00 - 10:00',
+  '10:00 - 11:00',
+  '11:00 - 12:00',
+  '12:00 - 12:30 (Lunch)',
+  '12:30 - 01:30',
+  '01:30 - 02:30'
+];
+
 export default function NoticeForm({ onSuccess }: { onSuccess: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<NoticeType>('GENERAL');
   const [loading, setLoading] = useState(false);
-  
   const [title, setTitle] = useState('');
   
   // Placement Fields
@@ -28,11 +38,23 @@ export default function NoticeForm({ onSuccess }: { onSuccess: () => void }) {
     salary: '',
     jobType: '',
     skills: '',
-    responsibilities: ''
+    responsibilities: '',
+    lastDate: ''
   });
 
-  // Tabular Fields (for EXAM and SCHEDULE)
-  const [tableRows, setTableRows] = useState([{ date: '', subject: '', time: '' }]);
+  // Exam Fields
+  const [examRows, setExamRows] = useState([{ date: '', subject: '', time: '' }]);
+  const [examParagraph, setExamParagraph] = useState('');
+
+  // Schedule Fields
+  const [scheduleInfo, setScheduleInfo] = useState({ year: '', branch: '' });
+  const [scheduleTable, setScheduleTable] = useState<Record<string, string[]>>(() => {
+    const initial: Record<string, string[]> = {};
+    DAYS.forEach(day => {
+      initial[day] = Array(TIME_SLOTS.length).fill('');
+    });
+    return initial;
+  });
 
   // General Fields
   const [generalData, setGeneralData] = useState({
@@ -41,8 +63,14 @@ export default function NoticeForm({ onSuccess }: { onSuccess: () => void }) {
     date: ''
   });
 
-  const addRow = () => setTableRows([...tableRows, { date: '', subject: '', time: '' }]);
-  const removeRow = (index: number) => setTableRows(tableRows.filter((_, i) => i !== index));
+  const resetForm = () => {
+    setTitle('');
+    setPlacementData({ companyName: '', time: '', eligibility: '', applyLink: '', salary: '', jobType: '', skills: '', responsibilities: '', lastDate: '' });
+    setExamRows([{ date: '', subject: '', time: '' }]);
+    setExamParagraph('');
+    setScheduleInfo({ year: '', branch: '' });
+    setGeneralData({ subject: '', content: '', date: '' });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +78,8 @@ export default function NoticeForm({ onSuccess }: { onSuccess: () => void }) {
 
     let content: any = {};
     if (type === 'PLACEMENT') content = placementData;
-    else if (type === 'EXAM' || type === 'SCHEDULE') content = { rows: tableRows };
+    else if (type === 'EXAM') content = { rows: examRows, paragraph: examParagraph };
+    else if (type === 'SCHEDULE') content = { ...scheduleInfo, timetable: scheduleTable, slots: TIME_SLOTS, days: DAYS };
     else content = generalData;
 
     try {
@@ -62,14 +91,10 @@ export default function NoticeForm({ onSuccess }: { onSuccess: () => void }) {
 
       if (!res.ok) throw new Error('Failed to create notice');
 
-      toast.success(type === 'PLACEMENT' ? 'Notice published successfully!' : 'Notice submitted for review!');
+      toast.success(type === 'PLACEMENT' ? 'Opportunity published!' : 'Notice submitted for review!');
       setIsOpen(false);
       onSuccess();
-      // Reset
-      setTitle('');
-      setPlacementData({ companyName: '', time: '', eligibility: '', applyLink: '', salary: '', jobType: '', skills: '', responsibilities: '' });
-      setTableRows([{ date: '', subject: '', time: '' }]);
-      setGeneralData({ subject: '', content: '', date: '' });
+      resetForm();
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -84,21 +109,21 @@ export default function NoticeForm({ onSuccess }: { onSuccess: () => void }) {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
+        <DialogContent className="sm:max-w-[1100px] w-[95vw] max-h-[92vh] overflow-y-auto rounded-2xl p-6 md:p-10">
           <DialogHeader>
-            <DialogTitle>Create New Notice</DialogTitle>
-            <DialogDescription>Select the notice type and fill in the details.</DialogDescription>
+            <DialogTitle className="text-3xl font-bold">Create New Institutional Notice</DialogTitle>
+            <DialogDescription className="text-lg">Select the appropriate type to generate a structured document.</DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-10 pt-6">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label>Notice Type</Label>
+                <Label className="font-semibold">Notice Type</Label>
                 <Select value={type} onValueChange={(v: any) => setType(v)}>
                   <SelectTrigger className="rounded-xl h-11">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     <SelectItem value="GENERAL">General Notice</SelectItem>
                     <SelectItem value="EXAM">Exam Notice</SelectItem>
                     <SelectItem value="SCHEDULE">College Schedule</SelectItem>
@@ -107,116 +132,138 @@ export default function NoticeForm({ onSuccess }: { onSuccess: () => void }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Notice Title</Label>
-                <Input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Unit Test-I Time Table" className="rounded-xl h-11" />
+                <Label className="font-semibold">Main Title</Label>
+                <Input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. SEMESTER END EXAMINATION" className="rounded-xl h-11" />
               </div>
             </div>
 
-            {/* PLACEMENT FIELDS */}
+            {/* PLACEMENT / OPPORTUNITY FIELDS */}
             {type === 'PLACEMENT' && (
-              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
-                <div className="space-y-2">
-                  <Label>Company Name</Label>
-                  <Input required value={placementData.companyName} onChange={(e) => setPlacementData({...placementData, companyName: e.target.value})} className="rounded-xl" />
+              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 border p-6 rounded-2xl bg-muted/20">
+                <div className="space-y-1"><Label className="text-sm">Company Name</Label><Input required value={placementData.companyName} onChange={(e) => setPlacementData({...placementData, companyName: e.target.value})} className="h-10 rounded-lg" /></div>
+                <div className="space-y-1"><Label className="text-sm">Interview Time</Label><Input required value={placementData.time} onChange={(e) => setPlacementData({...placementData, time: e.target.value})} placeholder="e.g. 10 AM" className="h-10 rounded-lg" /></div>
+                <div className="space-y-1"><Label className="text-sm">Eligibility</Label><Input required value={placementData.eligibility} onChange={(e) => setPlacementData({...placementData, eligibility: e.target.value})} className="h-10 rounded-lg" /></div>
+                <div className="space-y-1"><Label className="text-sm">Last Date to Apply</Label><Input required type="date" value={placementData.lastDate} onChange={(e) => setPlacementData({...placementData, lastDate: e.target.value})} className="h-10 rounded-lg" /></div>
+                <div className="space-y-1"><Label className="text-sm">Salary / Stipend</Label><Input required value={placementData.salary} onChange={(e) => setPlacementData({...placementData, salary: e.target.value})} className="h-10 rounded-lg" /></div>
+                <div className="space-y-1"><Label className="text-sm">Apply Link</Label><Input required value={placementData.applyLink} onChange={(e) => setPlacementData({...placementData, applyLink: e.target.value})} className="h-10 rounded-lg" /></div>
+                <div className="space-y-1 col-span-2"><Label className="text-sm">Required Skills</Label><Input required value={placementData.skills} onChange={(e) => setPlacementData({...placementData, skills: e.target.value})} className="h-10 rounded-lg" /></div>
+                <div className="space-y-1 col-span-2"><Label className="text-sm">Key Responsibilities</Label><Textarea required value={placementData.responsibilities} onChange={(e) => setPlacementData({...placementData, responsibilities: e.target.value})} className="min-h-[80px] rounded-lg" /></div>
+              </div>
+            )}
+
+            {/* EXAM FIELDS */}
+            {type === 'EXAM' && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 border p-6 rounded-2xl bg-muted/20">
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-lg font-bold">Exam Time Table</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setExamRows([...examRows, { date: '', subject: '', time: '' }])} className="rounded-lg h-8 text-xs border-primary text-primary hover:bg-primary/5"><Plus className="w-3 h-3 mr-1" /> Add Row</Button>
                 </div>
-                <div className="space-y-2">
-                  <Label>Interview Time</Label>
-                  <Input required value={placementData.time} onChange={(e) => setPlacementData({...placementData, time: e.target.value})} placeholder="e.g. 10:00 AM onwards" className="rounded-xl" />
+                
+                <div className="overflow-hidden border rounded-xl bg-background">
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-muted/50 border-b">
+                        <th className="p-2 text-left font-bold text-muted-foreground w-1/4">Date</th>
+                        <th className="p-2 text-left font-bold text-muted-foreground w-1/2">Subject Name</th>
+                        <th className="p-2 text-left font-bold text-muted-foreground w-1/4">Time Slot</th>
+                        <th className="p-2 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {examRows.map((row, i) => (
+                        <tr key={i} className="group">
+                          <td className="p-1">
+                            <Input type="date" value={row.date} onChange={(e) => {
+                              const n = [...examRows]; n[i].date = e.target.value; setExamRows(n);
+                            }} className="border-0 shadow-none focus-visible:ring-1 h-9 rounded-md" />
+                          </td>
+                          <td className="p-1">
+                            <Input value={row.subject} onChange={(e) => {
+                              const n = [...examRows]; n[i].subject = e.target.value; setExamRows(n);
+                            }} placeholder="e.g. Applied Mathematics" className="border-0 shadow-none focus-visible:ring-1 h-9 rounded-md" />
+                          </td>
+                          <td className="p-1">
+                            <Input value={row.time} onChange={(e) => {
+                              const n = [...examRows]; n[i].time = e.target.value; setExamRows(n);
+                            }} placeholder="10:30-1:30" className="border-0 shadow-none focus-visible:ring-1 h-9 rounded-md" />
+                          </td>
+                          <td className="p-1 text-center">
+                            {examRows.length > 1 && (
+                              <Button type="button" variant="ghost" size="icon" onClick={() => setExamRows(examRows.filter((_, idx) => idx !== i))} className="h-8 w-8 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="space-y-2">
-                  <Label>Student Eligibility</Label>
-                  <Input required value={placementData.eligibility} onChange={(e) => setPlacementData({...placementData, eligibility: e.target.value})} placeholder="e.g. Final Year IT/Comp" className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Apply Link</Label>
-                  <Input required value={placementData.applyLink} onChange={(e) => setPlacementData({...placementData, applyLink: e.target.value})} placeholder="https://..." className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Salary / Stipend</Label>
-                  <Input required value={placementData.salary} onChange={(e) => setPlacementData({...placementData, salary: e.target.value})} placeholder="e.g. 4.5 LPA or 15k/month" className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Job Type</Label>
-                  <Input required value={placementData.jobType} onChange={(e) => setPlacementData({...placementData, jobType: e.target.value})} placeholder="Full-time / Internship" className="rounded-xl" />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label>Required Skills</Label>
-                  <Input required value={placementData.skills} onChange={(e) => setPlacementData({...placementData, skills: e.target.value})} placeholder="React, Node.js, SQL..." className="rounded-xl" />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label>Key Responsibilities</Label>
-                  <Textarea required value={placementData.responsibilities} onChange={(e) => setPlacementData({...placementData, responsibilities: e.target.value})} className="rounded-xl" />
+                <div className="space-y-1 mt-4">
+                  <Label className="font-bold text-xs">Additional Instructions (Optional)</Label>
+                  <Textarea value={examParagraph} onChange={(e) => setExamParagraph(e.target.value)} placeholder="Rules for exam day..." className="min-h-[60px] rounded-lg text-sm" />
                 </div>
               </div>
             )}
 
-            {/* TABULAR FIELDS (EXAM / SCHEDULE) */}
-            {(type === 'EXAM' || type === 'SCHEDULE') && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                <Label>Schedule Details</Label>
-                {tableRows.map((row, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-2 items-end border p-3 rounded-xl relative group">
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase">Date</Label>
-                      <Input type="date" value={row.date} onChange={(e) => {
-                        const newRows = [...tableRows];
-                        newRows[index].date = e.target.value;
-                        setTableRows(newRows);
-                      }} className="h-9 rounded-lg" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase">Subject</Label>
-                      <Input value={row.subject} onChange={(e) => {
-                        const newRows = [...tableRows];
-                        newRows[index].subject = e.target.value;
-                        setTableRows(newRows);
-                      }} className="h-9 rounded-lg" />
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <div className="space-y-1 flex-1">
-                        <Label className="text-[10px] uppercase">Time</Label>
-                        <Input value={row.time} onChange={(e) => {
-                          const newRows = [...tableRows];
-                          newRows[index].time = e.target.value;
-                          setTableRows(newRows);
-                        }} placeholder="10:30-1:30" className="h-9 rounded-lg" />
-                      </div>
-                      {tableRows.length > 1 && (
-                        <Button type="button" variant="ghost" size="icon" onClick={() => removeRow(index)} className="h-9 w-9 text-red-500">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" onClick={addRow} className="w-full rounded-xl border-dashed">
-                  <Plus className="w-4 h-4 mr-2" /> Add Row
-                </Button>
+            {/* COLLEGE SCHEDULE (WEEKLY) */}
+            {type === 'SCHEDULE' && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 border p-6 rounded-2xl bg-muted/20">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1"><Label className="text-sm font-bold">Branch</Label><Input required value={scheduleInfo.branch} onChange={(e) => setScheduleInfo({...scheduleInfo, branch: e.target.value})} className="h-10 rounded-lg" /></div>
+                  <div className="space-y-1"><Label className="text-sm font-bold">Year / Semester</Label><Input required value={scheduleInfo.year} onChange={(e) => setScheduleInfo({...scheduleInfo, year: e.target.value})} className="h-10 rounded-lg" /></div>
+                </div>
+                
+                <div className="overflow-x-auto border rounded-xl bg-background">
+                  <table className="w-full text-xs border-collapse min-w-[800px]">
+                    <thead>
+                      <tr className="bg-muted/50">
+                        <th className="border p-2 w-32">Time Slot</th>
+                        {DAYS.map(day => <th key={day} className="border p-2">{day}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {TIME_SLOTS.map((slot, sIdx) => (
+                        <tr key={slot}>
+                          <td className="border p-2 font-bold bg-muted/20 text-center">{slot}</td>
+                          {DAYS.map(day => (
+                            <td key={day} className="border p-0.5">
+                              {slot.includes('Lunch') ? (
+                                <div className="text-[9px] text-center text-muted-foreground uppercase py-1">BREAK</div>
+                              ) : (
+                                <Input 
+                                  value={scheduleTable[day][sIdx]} 
+                                  onChange={(e) => {
+                                    const n = { ...scheduleTable };
+                                    n[day][sIdx] = e.target.value;
+                                    setScheduleTable(n);
+                                  }}
+                                  className="border-0 shadow-none focus-visible:ring-1 rounded-sm text-[11px] h-8 p-1"
+                                />
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
             {/* GENERAL FIELDS */}
             {type === 'GENERAL' && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                <div className="space-y-2">
-                  <Label>Subject</Label>
-                  <Input required value={generalData.subject} onChange={(e) => setGeneralData({...generalData, subject: e.target.value})} className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Content (Paragraph)</Label>
-                  <Textarea required value={generalData.content} onChange={(e) => setGeneralData({...generalData, content: e.target.value})} className="rounded-xl min-h-[150px]" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Notice Date</Label>
-                  <Input type="date" required value={generalData.date} onChange={(e) => setGeneralData({...generalData, date: e.target.value})} className="rounded-xl" />
-                </div>
+              <div className="space-y-6 animate-in fade-in slide-in-from-top-2 border p-8 rounded-3xl bg-muted/20">
+                <div className="space-y-3"><Label className="font-bold">Document Subject</Label><Input required value={generalData.subject} onChange={(e) => setGeneralData({...generalData, subject: e.target.value})} className="h-12 rounded-xl" /></div>
+                <div className="space-y-3"><Label className="font-bold">Full Content (Paragraphs)</Label><Textarea required value={generalData.content} onChange={(e) => setGeneralData({...generalData, content: e.target.value})} className="min-h-[250px] rounded-xl text-lg" /></div>
+                <div className="space-y-3"><Label className="font-bold">Official Notice Date</Label><Input type="date" required value={generalData.date} onChange={(e) => setGeneralData({...generalData, date: e.target.value})} className="h-12 rounded-xl" /></div>
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="rounded-xl">Cancel</Button>
-              <Button type="submit" disabled={loading} className="rounded-xl px-8">
-                {loading ? 'Submitting...' : type === 'PLACEMENT' ? 'Publish Immediately' : 'Submit for Approval'}
+            <div className="flex justify-end gap-3 pt-6 border-t">
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="h-11 px-8 rounded-xl">Cancel</Button>
+              <Button type="submit" disabled={loading} className="h-11 px-10 rounded-xl font-bold">
+                {loading ? 'Processing...' : type === 'PLACEMENT' ? 'Publish Opportunity' : 'Submit for Review'}
               </Button>
             </div>
           </form>

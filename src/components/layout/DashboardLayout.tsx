@@ -34,22 +34,22 @@ const roleNavItems: Record<string, NavItem[]> = {
   ],
   HOST: [
     { label: 'Dashboard', href: '/host', icon: LayoutDashboard },
-    { label: 'My Events', href: '/host', icon: ClipboardList },
+    { label: 'My Events', href: '/host/events', icon: ClipboardList },
     { label: 'Notices', href: '/host/notices', icon: FileText },
   ],
   HOD: [
     { label: 'Dashboard', href: '/hod', icon: LayoutDashboard },
-    { label: 'Events', href: '/hod', icon: ClipboardList },
+    { label: 'Events', href: '/hod/events', icon: ClipboardList },
     { label: 'Notices', href: '/hod/notices', icon: FileText },
   ],
   PRINCIPAL: [
     { label: 'Dashboard', href: '/principal', icon: LayoutDashboard },
-    { label: 'Events', href: '/principal', icon: ClipboardList },
+    { label: 'Events', href: '/principal/events', icon: ClipboardList },
     { label: 'Notices', href: '/principal/notices', icon: FileText },
   ],
   STUDENT: [
     { label: 'Dashboard', href: '/student', icon: LayoutDashboard },
-    { label: 'Events', href: '/student', icon: ClipboardList },
+    { label: 'Events', href: '/student/events', icon: ClipboardList },
     { label: 'Notices', href: '/student/notices', icon: FileText },
   ],
 };
