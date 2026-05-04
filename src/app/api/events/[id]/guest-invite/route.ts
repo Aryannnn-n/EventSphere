@@ -37,6 +37,9 @@ export async function POST(req: Request, { params }: RouteParams) {
     });
     const refNo = `MET/ITP/${new Date().getFullYear()}/${event.id.substring(0, 4).toUpperCase()}`;
 
+    const body = await req.json().catch(() => ({}));
+    const customEmailBody = body.customEmailHtml;
+
     // Send Email
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; background-color: #ffffff; color: #000000; border: 1px solid #eaeaea;">
@@ -62,20 +65,26 @@ export async function POST(req: Request, { params }: RouteParams) {
           <p style="margin: 0; padding-left: 20px; font-weight: bold;">${event.guestName}</p>
         </div>
 
-        <div style="font-size: 16px; margin-bottom: 30px;">
-          <p style="margin: 0;"><span style="font-weight: bold;">Subject:</span> Invitation as a Guest for "${event.title}"</p>
-        </div>
+        ${customEmailBody ? `
+          <div style="font-size: 16px; line-height: 1.8; margin-bottom: 50px;">
+            ${customEmailBody}
+          </div>
+        ` : `
+          <div style="font-size: 16px; margin-bottom: 30px;">
+            <p style="margin: 0;"><span style="font-weight: bold;">Subject:</span> Invitation as a Guest for "${event.title}"</p>
+          </div>
 
-        <div style="font-size: 16px; line-height: 1.8; margin-bottom: 50px;">
-          <p>Dear ${event.guestName},</p>
-          <p>We are pleased to invite you as a guest for the upcoming event <strong>"${event.title}"</strong> organized by the ${event.department} department.</p>
-          <p>The details of the event are as follows:<br/>
-          <strong>Date:</strong> ${eventDate}<br/>
-          <strong>Time:</strong> ${event.time}<br/>
-          <strong>Venue:</strong> ${event.venue}</p>
-          <p>We look forward to your gracious presence and valuable insights, which will greatly benefit our students and staff.</p>
-          <p>Thank you.</p>
-        </div>
+          <div style="font-size: 16px; line-height: 1.8; margin-bottom: 50px;">
+            <p>Dear ${event.guestName},</p>
+            <p>We are pleased to invite you as a guest for the upcoming event <strong>"${event.title}"</strong> organized by the ${event.department} department.</p>
+            <p>The details of the event are as follows:<br/>
+            <strong>Date:</strong> ${eventDate}<br/>
+            <strong>Time:</strong> ${event.time}<br/>
+            <strong>Venue:</strong> ${event.venue}</p>
+            <p>We look forward to your gracious presence and valuable insights, which will greatly benefit our students and staff.</p>
+            <p>Thank you.</p>
+          </div>
+        `}
 
         <table style="width: 100%; border-collapse: collapse; margin-top: 50px;">
           <tr>

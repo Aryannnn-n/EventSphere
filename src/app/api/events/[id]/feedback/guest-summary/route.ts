@@ -99,6 +99,9 @@ export async function POST(
       day: 'numeric', month: 'short', year: 'numeric'
     });
 
+    const body = await req.json().catch(() => ({}));
+    const customEmailHtml = body.customEmailHtml;
+
     // ── Build the full email HTML ─────────────────────────────────────────
     const emailHtml = `
       <!DOCTYPE html>
@@ -121,76 +124,82 @@ export async function POST(
           <!-- Body -->
           <div style="padding:36px;">
 
-            <h2 style="margin:0 0 8px; color:#1a1a2e; font-size:20px;">
-              Student Feedback Summary
-            </h2>
-            <p style="margin:0 0 24px; color:#555; font-size:14px;">
-              Thank you for your valuable contribution to our institution.
-              Here is a summary of how students responded to your session.
-            </p>
-
-            <!-- Event Info Box -->
-            <div style="background:#f8f9fa; border-left:4px solid #1a1a2e; padding:18px; border-radius:4px; margin-bottom:24px;">
-              <p style="margin:0 0 6px; font-size:14px;"><strong>Event:</strong> ${event.title}</p>
-              <p style="margin:0 0 6px; font-size:14px;"><strong>Date:</strong> ${formattedDate}</p>
-              <p style="margin:0 0 6px; font-size:14px;"><strong>Venue:</strong> ${event.venue}</p>
-              <p style="margin:0 0 6px; font-size:14px;"><strong>Organized by:</strong> ${event.host.name}</p>
-              <p style="margin:0; font-size:14px;"><strong>Department:</strong> ${event.department}</p>
-            </div>
-
-            <!-- Attendance + Rating Stats -->
-            <div style="display:flex; gap:16px; margin-bottom:24px;">
-              <div style="flex:1; background:#e8f5e9; border-radius:8px; padding:16px; text-align:center;">
-                <div style="font-size:28px; font-weight:bold; color:#2e7d32;">${totalAttended}</div>
-                <div style="font-size:12px; color:#555; margin-top:4px;">Students Attended</div>
+            ${customEmailHtml ? `
+              <div style="color:#333; font-size:14px; line-height:1.8;">
+                ${customEmailHtml}
               </div>
-              <div style="flex:1; background:#e3f2fd; border-radius:8px; padding:16px; text-align:center;">
-                <div style="font-size:28px; font-weight:bold; color:#1565c0;">${totalFeedback}</div>
-                <div style="font-size:12px; color:#555; margin-top:4px;">Feedback Responses</div>
+            ` : `
+              <h2 style="margin:0 0 8px; color:#1a1a2e; font-size:20px;">
+                Student Feedback Summary
+              </h2>
+              <p style="margin:0 0 24px; color:#555; font-size:14px;">
+                Thank you for your valuable contribution to our institution.
+                Here is a summary of how students responded to your session.
+              </p>
+
+              <!-- Event Info Box -->
+              <div style="background:#f8f9fa; border-left:4px solid #1a1a2e; padding:18px; border-radius:4px; margin-bottom:24px;">
+                <p style="margin:0 0 6px; font-size:14px;"><strong>Event:</strong> ${event.title}</p>
+                <p style="margin:0 0 6px; font-size:14px;"><strong>Date:</strong> ${formattedDate}</p>
+                <p style="margin:0 0 6px; font-size:14px;"><strong>Venue:</strong> ${event.venue}</p>
+                <p style="margin:0 0 6px; font-size:14px;"><strong>Organized by:</strong> ${event.host.name}</p>
+                <p style="margin:0; font-size:14px;"><strong>Department:</strong> ${event.department}</p>
               </div>
-              <div style="flex:1; background:#fff8e1; border-radius:8px; padding:16px; text-align:center;">
-                <div style="font-size:20px; font-weight:bold; color:#f57f17;">${stars}</div>
-                <div style="font-size:13px; color:#333; margin-top:2px;">${avgRating.toFixed(1)} / 5.0</div>
-                <div style="font-size:12px; color:#555;">Average Rating</div>
+
+              <!-- Attendance + Rating Stats -->
+              <div style="display:flex; gap:16px; margin-bottom:24px;">
+                <div style="flex:1; background:#e8f5e9; border-radius:8px; padding:16px; text-align:center;">
+                  <div style="font-size:28px; font-weight:bold; color:#2e7d32;">${totalAttended}</div>
+                  <div style="font-size:12px; color:#555; margin-top:4px;">Students Attended</div>
+                </div>
+                <div style="flex:1; background:#e3f2fd; border-radius:8px; padding:16px; text-align:center;">
+                  <div style="font-size:28px; font-weight:bold; color:#1565c0;">${totalFeedback}</div>
+                  <div style="font-size:12px; color:#555; margin-top:4px;">Feedback Responses</div>
+                </div>
+                <div style="flex:1; background:#fff8e1; border-radius:8px; padding:16px; text-align:center;">
+                  <div style="font-size:20px; font-weight:bold; color:#f57f17;">${stars}</div>
+                  <div style="font-size:13px; color:#333; margin-top:2px;">${avgRating.toFixed(1)} / 5.0</div>
+                  <div style="font-size:12px; color:#555;">Average Rating</div>
+                </div>
               </div>
-            </div>
 
-            <!-- Sentiment Analysis -->
-            <h3 style="color:#1a1a2e; font-size:16px; margin:0 0 8px;">Sentiment Analysis</h3>
-            <p style="margin:0 0 8px; color:#555; font-size:13px;">
-              Based on NLP analysis of ${totalFeedback} student responses:
-            </p>
-            ${sentimentBar}
-
-            <!-- Summary -->
-            <h3 style="color:#1a1a2e; font-size:16px; margin:24px 0 8px;">What Students Said</h3>
-            <div style="background:#f8f9fa; border-radius:8px; padding:18px; margin-bottom:24px;">
-              <p style="margin:0; color:#333; font-size:14px; line-height:1.8; font-style:italic;">
-                "${nlpResult.summary}"
+              <!-- Sentiment Analysis -->
+              <h3 style="color:#1a1a2e; font-size:16px; margin:0 0 8px;">Sentiment Analysis</h3>
+              <p style="margin:0 0 8px; color:#555; font-size:13px;">
+                Based on NLP analysis of ${totalFeedback} student responses:
               </p>
-            </div>
+              ${sentimentBar}
 
-            <!-- Keywords -->
-            <h3 style="color:#1a1a2e; font-size:16px; margin:0 0 10px;">Key Themes from Feedback</h3>
-            <div style="margin-bottom:28px;">
-              ${keywordPills}
-            </div>
+              <!-- Summary -->
+              <h3 style="color:#1a1a2e; font-size:16px; margin:24px 0 8px;">What Students Said</h3>
+              <div style="background:#f8f9fa; border-radius:8px; padding:18px; margin-bottom:24px;">
+                <p style="margin:0; color:#333; font-size:14px; line-height:1.8; font-style:italic;">
+                  "${nlpResult.summary}"
+                </p>
+              </div>
 
-            <!-- Thank you note -->
-            <div style="border-top:1px solid #eee; padding-top:20px; margin-top:8px;">
-              <p style="color:#333; font-size:14px; line-height:1.7; margin:0;">
-                We deeply appreciate your time and expertise. The overwhelmingly positive 
-                response from our students reflects the quality of your session. 
-                We hope to have you with us again in the future.
-              </p>
-              <p style="color:#333; font-size:14px; margin:16px 0 0;">
-                Warm regards,<br/>
-                <strong>${event.host.name}</strong><br/>
-                ${event.host.designation || "Faculty"}<br/>
-                ${event.department}<br/>
-                ${process.env.NEXT_PUBLIC_COLLEGE_NAME || "MET's Institute of Technology"}
-              </p>
-            </div>
+              <!-- Keywords -->
+              <h3 style="color:#1a1a2e; font-size:16px; margin:0 0 10px;">Key Themes from Feedback</h3>
+              <div style="margin-bottom:28px;">
+                ${keywordPills}
+              </div>
+
+              <!-- Thank you note -->
+              <div style="border-top:1px solid #eee; padding-top:20px; margin-top:8px;">
+                <p style="color:#333; font-size:14px; line-height:1.7; margin:0;">
+                  We deeply appreciate your time and expertise. The overwhelmingly positive 
+                  response from our students reflects the quality of your session. 
+                  We hope to have you with us again in the future.
+                </p>
+                <p style="color:#333; font-size:14px; margin:16px 0 0;">
+                  Warm regards,<br/>
+                  <strong>${event.host.name}</strong><br/>
+                  ${event.host.designation || "Faculty"}<br/>
+                  ${event.department}<br/>
+                  ${process.env.NEXT_PUBLIC_COLLEGE_NAME || "MET's Institute of Technology"}
+                </p>
+              </div>
+            `}
 
           </div>
 

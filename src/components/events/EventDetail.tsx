@@ -19,6 +19,8 @@ type EventData = {
   venue: string; department: string; guestName: string; guestEmail: string;
   guestStatus: string; status: string; host: { name: string; email: string };
   reportGeneratedAt?: string; reportEmailedAt?: string;
+  customLetterHtml?: string | null;
+  customNoticeHtml?: string | null;
 };
 
 type AttendanceRecord = {
@@ -70,6 +72,19 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     title: '', description: '', date: '', time: '', venue: '', guestName: '', guestEmail: ''
+  });
+
+  // Generic Email Preview
+  const [previewData, setPreviewData] = useState<{
+    isOpen: boolean;
+    type: 'invite' | 'summary' | 'report' | null;
+    html: string;
+    endpoint: string;
+  }>({
+    isOpen: false,
+    type: null,
+    html: '',
+    endpoint: '',
   });
 
   const fetchEvent = async () => {
@@ -157,7 +172,7 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
   const isPrincipal = role === 'PRINCIPAL';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <Button variant="ghost" onClick={() => router.push(backPath)} className="rounded-xl -ml-2">
         <ArrowLeft className="w-4 h-4 mr-2" /> Back
       </Button>
@@ -277,7 +292,29 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-3">Send an email invitation to <strong>{event.guestName}</strong> ({event.guestEmail}).</p>
                 <div className="flex gap-2">
-                  <Button className="rounded-xl" disabled={actionLoading} onClick={() => doAction('guest-invite')}><Mail className="w-4 h-4 mr-2" /> Send Invitation Email</Button>
+                  <Button className="rounded-xl" disabled={actionLoading} onClick={() => {
+                    const eventDate = new Date(event.date).toLocaleDateString('en-IN', {
+                      day: '2-digit', month: '2-digit', year: 'numeric'
+                    });
+                    const defaultHtml = `
+<p><span style="font-weight: bold;">Subject:</span> Invitation as a Guest for "${event.title}"</p>
+<br/>
+<p>Dear ${event.guestName},</p>
+<p>We are pleased to invite you as a guest for the upcoming event <strong>"${event.title}"</strong> organized by the ${event.department} department.</p>
+<p>The details of the event are as follows:<br/>
+<strong>Date:</strong> ${eventDate}<br/>
+<strong>Time:</strong> ${event.time}<br/>
+<strong>Venue:</strong> ${event.venue}</p>
+<p>We look forward to your gracious presence and valuable insights, which will greatly benefit our students and staff.</p>
+<p>Thank you.</p>
+`;
+                    setPreviewData({
+                      isOpen: true,
+                      type: 'invite',
+                      html: event.customLetterHtml || defaultHtml,
+                      endpoint: 'guest-invite'
+                    });
+                  }}><Mail className="w-4 h-4 mr-2" /> Preview & Send Invite</Button>
                 </div>
               </CardContent>
             </Card>
@@ -436,7 +473,32 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
                       }}>
                         Run NLP Analysis
                       </Button>
-                      <Button size="sm" className="rounded-xl" disabled={actionLoading} onClick={() => doAction('feedback/guest-summary', 'POST')}>
+                      <Button size="sm" className="rounded-xl" disabled={actionLoading} onClick={() => {
+                        const formattedDate = new Date(event.date).toLocaleDateString('en-IN', {
+                          day: 'numeric', month: 'short', year: 'numeric'
+                        });
+                        const defaultHtml = `
+<h2 style="margin:0 0 8px; color:#1a1a2e; font-size:20px;">Student Feedback Summary</h2>
+<p style="margin:0 0 24px; color:#555; font-size:14px;">Thank you for your valuable contribution to our institution. Here is a summary of how students responded to your session.</p>
+<div style="background:#f8f9fa; border-left:4px solid #1a1a2e; padding:18px; border-radius:4px; margin-bottom:24px;">
+  <p style="margin:0 0 6px; font-size:14px;"><strong>Event:</strong> ${event.title}</p>
+  <p style="margin:0 0 6px; font-size:14px;"><strong>Date:</strong> ${formattedDate}</p>
+  <p style="margin:0 0 6px; font-size:14px;"><strong>Venue:</strong> ${event.venue}</p>
+  <p style="margin:0 0 6px; font-size:14px;"><strong>Organized by:</strong> ${event.host.name}</p>
+</div>
+<h3 style="color:#1a1a2e; font-size:16px; margin:24px 0 8px;">What Students Said</h3>
+<div style="background:#f8f9fa; border-radius:8px; padding:18px; margin-bottom:24px;">
+  <p style="margin:0; color:#333; font-size:14px; line-height:1.8; font-style:italic;">"${feedbackData.nlpResult.summary}"</p>
+</div>
+<p style="color:#333; font-size:14px; line-height:1.7; margin:0;">We deeply appreciate your time and expertise. The response from our students reflects the quality of your session. We hope to have you with us again in the future.</p>
+`;
+                        setPreviewData({
+                          isOpen: true,
+                          type: 'summary',
+                          html: defaultHtml,
+                          endpoint: 'feedback/guest-summary'
+                        });
+                      }}>
                         Send Guest Summary Email
                       </Button>
                     </div>
@@ -489,7 +551,60 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
                     {report.financials && <div><p className="text-xs text-muted-foreground mb-1">Financials</p><p className="text-sm">{report.financials}</p></div>}
                   </CardContent>
                 </Card>
-                <Button className="rounded-xl" onClick={async () => { await doAction('report/email'); }}><Mail className="w-4 h-4 mr-2" /> Email Report to HOD</Button>
+                <Button className="rounded-xl" disabled={actionLoading} onClick={() => {
+                  const defaultHtml = `
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
+  <div style="background-color: #1a1a2e; color: #ffffff; padding: 30px; text-align: center;">
+    <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Event Final Report</h1>
+    <p style="margin: 10px 0 0; opacity: 0.8; font-size: 14px;">${event.title}</p>
+  </div>
+  
+  <div style="padding: 30px;">
+    <p style="font-size: 16px; margin-bottom: 25px;">Dear HOD,</p>
+    <p style="margin-bottom: 25px;">The following report has been compiled for the recently completed event. Please find the performance metrics and summary below.</p>
+    
+    <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+      <div style="flex: 1; background-color: #f8f9fa; border-radius: 10px; padding: 20px; text-align: center; border: 1px solid #eee;">
+        <div style="font-size: 24px; font-weight: bold; color: #1a1a2e;">${report.attendanceCount}</div>
+        <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">Students</div>
+      </div>
+      <div style="flex: 1; background-color: #f8f9fa; border-radius: 10px; padding: 20px; text-align: center; border: 1px solid #eee;">
+        <div style="font-size: 24px; font-weight: bold; color: #1a1a2e;">${report.averageRating.toFixed(1)}</div>
+        <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">Avg Rating</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 30px;">
+      <h3 style="color: #1a1a2e; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; font-size: 18px;">Executive Summary</h3>
+      <p style="color: #444; font-size: 15px; background-color: #fff; border-radius: 8px; border: 1px solid #f0f0f0; padding: 15px;">${report.summary}</p>
+    </div>
+
+    ${report.financials ? `
+    <div style="margin-bottom: 30px;">
+      <h3 style="color: #1a1a2e; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; font-size: 18px;">Financial Overview</h3>
+      <p style="color: #444; font-size: 15px; background-color: #fff; border-radius: 8px; border: 1px solid #f0f0f0; padding: 15px;">${report.financials}</p>
+    </div>
+    ` : ''}
+
+    <div style="margin-top: 40px; padding-top: 25px; border-top: 1px solid #eee;">
+      <p style="margin: 0; font-weight: 600; color: #1a1a2e;">${event.host.name}</p>
+      <p style="margin: 5px 0 0; color: #666; font-size: 14px;">Event Coordinator</p>
+      <p style="margin: 2px 0 0; color: #666; font-size: 14px;">${event.department} Department</p>
+    </div>
+  </div>
+  
+  <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px; color: #999;">
+    This report was generated via EventSphere Management System.
+  </div>
+</div>
+`;
+                  setPreviewData({
+                    isOpen: true,
+                    type: 'report',
+                    html: defaultHtml,
+                    endpoint: 'report/email'
+                  });
+                }}><Mail className="w-4 h-4 mr-2" /> Email Report to HOD</Button>
               </>
             ) : (
               <Card className="border-border/50">
@@ -573,6 +688,47 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
               <Button type="submit" className="rounded-xl">Save Changes</Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+      {/* Generic Email Preview Dialog */}
+      <Dialog open={previewData.isOpen} onOpenChange={(open) => setPreviewData(prev => ({ ...prev, isOpen: open }))}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {previewData.type === 'invite' && 'Preview Guest Invitation'}
+              {previewData.type === 'summary' && 'Preview Guest Feedback Summary'}
+              {previewData.type === 'report' && 'Preview HOD Report Email'}
+            </DialogTitle>
+            <DialogDescription>Review and edit the email content before sending.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label className="mb-2 block text-sm font-medium">Email Content</Label>
+            <div 
+              contentEditable
+              suppressContentEditableWarning
+              className="min-h-[300px] max-h-[500px] overflow-y-auto p-6 border rounded-xl outline-none focus:ring-2 focus:ring-primary/50 text-base leading-relaxed bg-white text-black"
+              onBlur={(e) => {
+                const html = e.currentTarget.innerHTML;
+                setPreviewData(prev => ({ ...prev, html }));
+              }}
+              dangerouslySetInnerHTML={{ __html: previewData.html }}
+            />
+            <p className="text-[10px] text-muted-foreground mt-2 italic">
+              {previewData.type === 'invite' && '* Header, footer, and signatures will be added automatically.'}
+              {previewData.type === 'summary' && '* Technical stats and branding will be added automatically.'}
+              {previewData.type === 'report' && '* This content will be sent as the final report email.'}
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setPreviewData(prev => ({ ...prev, isOpen: false }))} className="rounded-xl">Cancel</Button>
+            <Button className="rounded-xl px-6" disabled={actionLoading} onClick={async () => {
+              await doAction(previewData.endpoint, 'POST', { customEmailHtml: previewData.html });
+              setPreviewData(prev => ({ ...prev, isOpen: false }));
+            }}>
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Mail className="w-4 h-4 mr-2" />}
+              Send Email Now
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
