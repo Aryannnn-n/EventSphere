@@ -1,5 +1,12 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { auth } from '@/lib/auth';
 import {
   ArrowRight,
   CalendarCheck,
@@ -16,62 +23,119 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { auth } from '@/lib/auth';
 
 /* ───── Static Data ───── */
 
 const features = [
   {
     title: 'Multi-Tier Approvals',
-    description: 'Streamlined workflows with mandatory HOD and Principal review processes ensuring proper governance.',
+    description:
+      'Streamlined workflows with mandatory HOD and Principal review processes ensuring proper governance.',
     icon: ShieldCheck,
     color: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
   },
   {
     title: 'Automated Guest Invites',
-    description: 'System-generated email invitations and real-time status tracking for esteemed guests.',
+    description:
+      'System-generated email invitations and real-time status tracking for esteemed guests.',
     icon: Mail,
     color: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400',
   },
   {
     title: 'Attendance Tracking',
-    description: 'Effortlessly mark and monitor student attendance with detailed presence records.',
+    description:
+      'Effortlessly mark and monitor student attendance with detailed presence records.',
     icon: UserCheck,
     color: 'bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400',
   },
   {
     title: 'Student Feedback',
-    description: 'Built-in star ratings and comments for students to review and rate past events.',
+    description:
+      'Built-in star ratings and comments for students to review and rate past events.',
     icon: Star,
     color: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400',
   },
   {
     title: 'Automated Reporting',
-    description: 'One-click generation of comprehensive post-event reports with attendance and financials.',
+    description:
+      'One-click generation of comprehensive post-event reports with attendance and financials.',
     icon: FileText,
-    color: 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400',
+    color:
+      'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400',
   },
   {
     title: 'Centralized Dashboard',
-    description: 'Role-specific views ensuring everyone has exactly the tools and information they need.',
+    description:
+      'Role-specific views ensuring everyone has exactly the tools and information they need.',
     icon: CalendarCheck,
-    color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400',
+    color:
+      'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400',
   },
 ];
 
 const workflowSteps = [
-  { step: '01', title: 'Create Event', description: 'Host submits event proposal with all details', icon: CalendarCheck },
-  { step: '02', title: 'HOD Review', description: 'Department head reviews and forwards', icon: ClipboardCheck },
-  { step: '03', title: 'Principal Approval', description: 'Principal gives final approval', icon: Shield },
-  { step: '04', title: 'Execute & Report', description: 'Run event, track attendance, generate report', icon: CheckCircle2 },
+  {
+    step: '01',
+    title: 'Create Event',
+    description: 'Host submits event proposal with all details',
+    icon: CalendarCheck,
+  },
+  {
+    step: '02',
+    title: 'HOD Review',
+    description: 'Department head reviews and forwards',
+    icon: ClipboardCheck,
+  },
+  {
+    step: '03',
+    title: 'Principal Approval',
+    description: 'Principal gives final approval',
+    icon: Shield,
+  },
+  {
+    step: '04',
+    title: 'Execute & Report',
+    description: 'Run event, track attendance, generate report',
+    icon: CheckCircle2,
+  },
 ];
 
 const roles = [
-  { name: 'Host / Faculty', path: '/login', desc: 'Create events, manage attendance, and generate reports.', icon: Users, gradient: 'from-red-500 to-rose-600' },
-  { name: 'HOD', path: '/login', desc: 'Review, reject, or approve departmental events.', icon: ShieldCheck, gradient: 'from-blue-500 to-indigo-600' },
-  { name: 'Principal', path: '/login', desc: 'Provide final approval for college-wide events.', icon: Shield, gradient: 'from-purple-500 to-violet-600' },
-  { name: 'Student', path: '/login', desc: 'View upcoming events and submit feedback.', icon: GraduationCap, gradient: 'from-emerald-500 to-teal-600' },
-  { name: 'Admin', path: '/login', desc: 'Manage user access and system configurations.', icon: UserCheck, gradient: 'from-amber-500 to-orange-600' },
+  {
+    name: 'Host / Faculty',
+    path: '/login',
+    desc: 'Create events, manage attendance, and generate reports.',
+    icon: Users,
+    gradient: 'from-red-500 to-rose-600',
+  },
+  {
+    name: 'HOD',
+    path: '/login',
+    desc: 'Review, reject, or approve departmental events.',
+    icon: ShieldCheck,
+    gradient: 'from-blue-500 to-indigo-600',
+  },
+  {
+    name: 'Principal',
+    path: '/login',
+    desc: 'Provide final approval for college-wide events.',
+    icon: Shield,
+    gradient: 'from-purple-500 to-violet-600',
+  },
+  {
+    name: 'Student',
+    path: '/login',
+    desc: 'View upcoming events and submit feedback.',
+    icon: GraduationCap,
+    gradient: 'from-emerald-500 to-teal-600',
+  },
+  {
+    name: 'Admin',
+    path: '/login',
+    desc: 'Manage user access and system configurations.',
+    icon: UserCheck,
+    gradient: 'from-amber-500 to-orange-600',
+  },
 ];
 
 const stats = [
@@ -96,25 +160,43 @@ export default async function Home() {
         <div className="container mx-auto px-6 h-18 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shadow-lg border border-border/50 overflow-hidden p-1">
-              <Image src="/logo.png" alt="MET Logo" width={40} height={40} className="object-contain" />
+              <Image
+                src="/logo.png"
+                alt="MET Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
             </div>
             <span className="text-xl font-bold tracking-tight">
               Event<span className="text-primary">Sphere</span>
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            <Link
+              href="#features"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
               Features
             </Link>
-            <Link href="#workflow" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            <Link
+              href="#workflow"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
               How It Works
             </Link>
-            <Link href="#roles" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            <Link
+              href="#roles"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
               Roles
             </Link>
           </nav>
           <Link href={dashboardHref}>
-            <Button size="lg" className="rounded-xl px-6 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
+            <Button
+              size="lg"
+              className="rounded-xl px-6 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+            >
               {buttonText}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -156,19 +238,27 @@ export default async function Home() {
             </h1>
 
             <p className="text-lg md:text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up delay-200">
-              From proposal to final report, EventSphere handles approvals, guest invitations,
-              attendance, and feedback seamlessly in one unified platform.
+              From proposal to final report, EventSphere handles approvals,
+              guest invitations, attendance, and feedback seamlessly in one
+              unified platform.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up delay-300">
               <Link href={dashboardHref}>
-                <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg font-semibold rounded-xl bg-white text-primary hover:bg-white/90 shadow-xl shadow-black/20 transition-all">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto h-14 px-8 text-lg font-semibold rounded-xl bg-white text-primary hover:bg-white/90 shadow-xl shadow-black/20 transition-all"
+                >
                   {session ? 'Go to Dashboard' : 'Get Started'}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
               <Link href="#features">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 text-lg font-semibold rounded-xl border-white/30 text-black hover:bg-white/10 transition-all">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto h-14 px-8 text-lg font-semibold rounded-xl border-white/30 text-black hover:bg-white/10 transition-all"
+                >
                   Explore Features
                 </Button>
               </Link>
@@ -201,8 +291,9 @@ export default async function Home() {
                 <span className="text-primary">successful events</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Built specifically for educational institutions, EventSphere enforces strict approval
-                workflows while simplifying the organizational burden.
+                Built specifically for educational institutions, EventSphere
+                enforces strict approval workflows while simplifying the
+                organizational burden.
               </p>
             </div>
 
@@ -213,7 +304,9 @@ export default async function Home() {
                   className="card-hover border-border/50 hover:border-primary/30 bg-card"
                 >
                   <CardHeader>
-                    <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-3`}>
+                    <div
+                      className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-3`}
+                    >
                       <feature.icon className="w-6 h-6" />
                     </div>
                     <CardTitle className="text-lg">{feature.title}</CardTitle>
@@ -240,7 +333,8 @@ export default async function Home() {
                 How it <span className="text-primary">works</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                A streamlined 4-step process from event creation to final report.
+                A streamlined 4-step process from event creation to final
+                report.
               </p>
             </div>
 
@@ -254,9 +348,13 @@ export default async function Home() {
                   <div className="relative z-10 mx-auto w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center mb-4 shadow-lg shadow-red-500/20 group-hover:shadow-red-500/40 transition-shadow">
                     <item.icon className="w-8 h-8 text-white" />
                   </div>
-                  <span className="text-xs font-bold text-primary mb-1 block">STEP {item.step}</span>
+                  <span className="text-xs font-bold text-primary mb-1 block">
+                    STEP {item.step}
+                  </span>
                   <h3 className="text-lg font-bold mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -274,7 +372,8 @@ export default async function Home() {
                 Tailored for <span className="text-primary">every role</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Secure, role-based access ensures everyone sees exactly what they need.
+                Secure, role-based access ensures everyone sees exactly what
+                they need.
               </p>
             </div>
 
@@ -282,9 +381,13 @@ export default async function Home() {
               {roles.map((role, i) => (
                 <Link href={role.path} key={i} className="block group">
                   <Card className="h-full card-hover border-border/50 hover:border-primary/50 overflow-hidden">
-                    <div className={`h-1.5 bg-gradient-to-r ${role.gradient}`} />
+                    <div
+                      className={`h-1.5 bg-gradient-to-r ${role.gradient}`}
+                    />
                     <CardHeader className="pb-3">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${role.gradient} flex items-center justify-center mb-3 shadow-md`}>
+                      <div
+                        className={`w-12 h-12 rounded-xl bg-gradient-to-br ${role.gradient} flex items-center justify-center mb-3 shadow-md`}
+                      >
                         <role.icon className="w-6 h-6 text-white" />
                       </div>
                       <CardTitle className="text-lg group-hover:text-primary transition-colors">
@@ -292,7 +395,9 @@ export default async function Home() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <CardDescription className="text-sm leading-relaxed">{role.desc}</CardDescription>
+                      <CardDescription className="text-sm leading-relaxed">
+                        {role.desc}
+                      </CardDescription>
                     </CardContent>
                   </Card>
                 </Link>
@@ -313,21 +418,34 @@ export default async function Home() {
               </div>
               <span className="text-2xl font-bold">EventSphere</span>
             </div>
-            <p className="text-white/50 text-sm">Elevating College Event Management</p>
+            <p className="text-white/50 text-sm">
+              Elevating College Event Management
+            </p>
           </div>
 
           {/* Developer Team */}
           <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-20 mb-12">
             {[
-              { name: 'Keshav Potewar', role: 'Developer', size: 'w-18 h-18' },
-              { name: 'Aryan Chavan', role: 'Developer', size: 'w-18 h-18' },
-              { name: 'Amol Sonawane', role: 'Developer', size: 'w-18 h-18' },
+              { name: 'Keshav Potewar', role: 'Developer', size: 'w-18 h-18', src: 'Keshav.png', },
+              {
+                name: 'Aryan Chavan',
+                role: 'Developer',
+                size: 'w-18 h-18',
+                src: 'Rn.png',
+              },
+              { name: 'Amol Sonawane', role: 'Developer', size: 'w-18 h-18' ,  src: 'Amol.png', },
             ].map((dev, i) => (
               <div key={i} className="flex flex-col items-center gap-3 group">
-                <div className={`${dev.size} rounded-full bg-white/10 border-2 border-white/10 group-hover:border-primary transition-colors flex items-center justify-center`}>
-                  <span className="text-sm font-bold text-white/40">
+                <div
+                  className={`${dev.size} rounded-full bg-white/10 border-2 border-white/10 group-hover:border-primary transition-colors flex items-center justify-center`}
+                >
+                  {/* <span className="text-sm font-bold text-white/40">
                     {dev.name.split(' ').map(n => n[0]).join('')}
-                  </span>
+                  </span> */}
+                  <img
+                    className={`${dev.size} rounded-full`}
+                    src={`${dev.src}`}
+                  ></img>
                 </div>
                 <span className="font-medium text-sm">{dev.name}</span>
                 <span className="text-xs text-white/40">{dev.role}</span>
@@ -337,10 +455,17 @@ export default async function Home() {
 
           {/* Bottom bar */}
           <div className="border-t border-white/10 pt-4 flex flex-col md:flex-row items-center justify-between text-sm text-white/40">
-            <p>&copy; {new Date().getFullYear()} EventSphere. All rights reserved.</p>
+            <p>
+              &copy; {new Date().getFullYear()} EventSphere. All rights
+              reserved.
+            </p>
             <div className="flex items-center gap-6 mt-4 md:mt-0">
-              <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-              <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
+              <Link href="#" className="hover:text-white transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="#" className="hover:text-white transition-colors">
+                Terms of Service
+              </Link>
             </div>
           </div>
         </div>
