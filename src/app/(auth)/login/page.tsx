@@ -7,8 +7,17 @@ import { Label } from '@/components/ui/label';
 import { CalendarCheck, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const redirectMap: Record<string, string> = {
   ADMIN: '/admin',
@@ -18,6 +27,34 @@ const redirectMap: Record<string, string> = {
   STUDENT: '/student',
 };
 
+const demoAccounts = [
+  // {
+  //   role: 'Admin',
+  //   email: 'admin@demo.com',
+  //   password: 'Demo@123',
+  // },
+  {
+    role: 'Student',
+    email: 'chavanaryan58@gmail.com',
+    password: 'pass@123',
+  },
+  {
+    role: 'Host',
+    email: 's@gmail.com',
+    password: 'pass@123',
+  },
+  {
+    role: 'HOD',
+    email: 'ss@gmail.com',
+    password: 'pass@123',
+  },
+  {
+    role: 'Principal',
+    email: 'narkhede@gmail.com',
+    password: 'pass@123',
+  },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -25,6 +62,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,17 +127,29 @@ export default function LoginPage() {
         <div className="relative z-10 text-white text-center max-w-md">
           <div className="flex items-center justify-center gap-3 mb-8">
             <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center border border-white/30 shadow-2xl overflow-hidden p-2">
-              <Image src="/logo.png" alt="MET Logo" width={60} height={60} className="object-contain" />
+              <Link href="/">
+                <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center border border-white/30 shadow-2xl overflow-hidden p-2 cursor-pointer">
+                  <Image
+                    src="/logo.png"
+                    alt="MET Logo"
+                    width={60}
+                    height={60}
+                    className="object-contain"
+                  />
+                </div>
+              </Link>
             </div>
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight mb-4 drop-shadow-lg">EventSphere</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight mb-4 drop-shadow-lg">
+            EventSphere
+          </h1>
           <p className="text-lg text-white/90 leading-relaxed mb-8 font-medium drop-shadow-md">
             MET&apos;s Institute of Technology
           </p>
           <div className="w-16 h-1 bg-white/50 mx-auto mb-8 rounded-full shadow-lg" />
           <p className="text-sm text-white/80 leading-relaxed font-medium drop-shadow-md">
-            Streamline your college events from proposal to final report with automated approvals,
-            guest management, and comprehensive reporting.
+            Streamline your college events from proposal to final report with
+            automated approvals, guest management, and comprehensive reporting.
           </p>
         </div>
       </div>
@@ -117,12 +167,60 @@ export default function LoginPage() {
                 Event<span className="text-primary">Sphere</span>
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">MET&apos;s Institute of Technology</p>
+            <p className="text-sm text-muted-foreground">
+              MET&apos;s Institute of Technology
+            </p>
           </div>
+
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full h-12 mb-4 rounded-xl">
+                Show Test Credentials
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Demo Accounts</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-3">
+                {demoAccounts.map((account) => (
+                  <div
+                    key={account.role}
+                    onClick={() => {
+                      setEmail(account.email);
+                      setPassword(account.password);
+                      setOpen(false);
+                    }}
+                    className="rounded-lg border p-3 cursor-pointer hover:bg-muted transition-colors"
+                  >
+                    <div className="font-semibold text-primary">
+                      {account.role}
+                    </div>
+
+                    <div className="text-sm mt-1">
+                      <strong>Email:</strong> {account.email}
+                    </div>
+
+                    <div className="text-sm">
+                      <strong>Password:</strong> {account.password}
+                    </div>
+
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Click to autofill login form
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Card className="border-border/50 shadow-xl shadow-black/5">
             <CardHeader className="space-y-1 pb-4">
-              <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
+              <h2 className="text-2xl font-bold tracking-tight">
+                Welcome back
+              </h2>
               <p className="text-sm text-muted-foreground">
                 Sign in to your EventSphere dashboard
               </p>
@@ -163,7 +261,11 @@ export default function LoginPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>

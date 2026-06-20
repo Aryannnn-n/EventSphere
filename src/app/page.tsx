@@ -426,26 +426,36 @@ export default async function Home() {
           {/* Developer Team */}
           <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-20 mb-12">
             {[
-              { name: 'Keshav Potewar', role: 'Developer', size: 'w-18 h-18', src: 'Keshav.png', },
+              {
+                name: 'Keshav Potewar',
+                role: 'Software Developer',
+                size: 'w-18 h-18',
+                src: 'Keshav.png',
+              },
               {
                 name: 'Aryan Chavan',
-                role: 'Developer',
+                role: 'Lead Software Developer',
                 size: 'w-18 h-18',
                 src: 'Rn.png',
               },
-              { name: 'Amol Sonawane', role: 'Developer', size: 'w-18 h-18' ,  src: 'Amol.png', },
+              {
+                name: 'Amol Sonawane',
+                role: 'SDE – NLP & Analytics',
+                size: 'w-18 h-18',
+                src: 'Amol.png',
+              },
             ].map((dev, i) => (
               <div key={i} className="flex flex-col items-center gap-3 group">
                 <div
-                  className={`${dev.size} rounded-full bg-white/10 border-2 border-white/10 group-hover:border-primary transition-colors flex items-center justify-center`}
+                  className={`${dev.size} rounded-full bg-white/10 border-2 border-white/10 group-hover:border-primary transition-colors flex items-center justify-center overflow-hidden`}
                 >
-                  {/* <span className="text-sm font-bold text-white/40">
-                    {dev.name.split(' ').map(n => n[0]).join('')}
-                  </span> */}
-                  <img
-                    className={`${dev.size} rounded-full`}
-                    src={`${dev.src}`}
-                  ></img>
+                  <Image
+                    src={`/${dev.src}`}
+                    alt={dev.name}
+                    width={80}
+                    height={80}
+                    className="rounded-full object-cover"
+                  />
                 </div>
                 <span className="font-medium text-sm">{dev.name}</span>
                 <span className="text-xs text-white/40">{dev.role}</span>
