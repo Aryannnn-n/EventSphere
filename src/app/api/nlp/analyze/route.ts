@@ -59,7 +59,14 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Step 3: Check if Python NLP service is reachable ─────────────────
-    const nlpServiceUrl = process.env.NLP_SERVICE_URL || "http://127.0.0.1:5000";
+    const nlpServiceUrl = process.env.NLP_SERVICE_URL;
+
+    if (!nlpServiceUrl) {
+      return NextResponse.json(
+        { error: "NLP service URL is not configured. Set NLP_SERVICE_URL in environment variables." },
+        { status: 503 }
+      );
+    }
 
     try {
       const healthCheck = await fetch(`${nlpServiceUrl}/health`, {

@@ -300,7 +300,7 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
                     const defaultHtml = `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; padding: 20px;">
   <div style="text-align: center; margin-bottom: 25px;">
-    <img src="http://localhost:3000/logo.png" alt="MET Logo" style="width: 80px; height: 80px; object-fit: contain;">
+    <img src="${window.location.origin}/logo.png" alt="MET Logo" style="width: 80px; height: 80px; object-fit: contain;">
   </div>
   <p><span style="font-weight: bold;">Subject:</span> Invitation as a Guest for "${event.title}"</p>
   <br/>
@@ -616,7 +616,7 @@ export default function EventDetail({ role, eventId, backPath }: { role: string;
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
   <div style="background-color: #1a1a2e; color: #ffffff; padding: 30px; text-align: center;">
     <div style="background: white; width: 60px; height: 60px; border-radius: 10px; padding: 5px; margin: 0 auto 15px;">
-      <img src="http://localhost:3000/logo.png" alt="MET Logo" style="width: 100%; height: 100%; object-fit: contain;">
+      <img src="${window.location.origin}/logo.png" alt="MET Logo" style="width: 100%; height: 100%; object-fit: contain;">
     </div>
     <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Event Final Report</h1>
     <p style="margin: 10px 0 0; opacity: 0.8; font-size: 14px;">${event.title}</p>
